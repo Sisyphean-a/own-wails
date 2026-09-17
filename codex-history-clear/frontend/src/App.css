@@ -1,0 +1,269 @@
+.工作台 {
+    --workspace-padding: 14px;
+    --bg: #101214;
+    --surface: #15181b;
+    --surface-raised: #1a1e22;
+    --surface-hover: #20252a;
+    --border: #2a3036;
+    --border-strong: #3a424a;
+    --text: #edf0f2;
+    --text-strong: #fafafa;
+    --muted: #969fa8;
+    --subtle: #717a83;
+    --accent: #55bfa9;
+    --accent-strong: #6dd1bb;
+    --accent-soft: rgba(85, 191, 169, 0.12);
+    --danger: #e77d5f;
+    --danger-strong: #f09679;
+    --danger-soft: rgba(231, 125, 95, 0.12);
+    --warn: #dca95f;
+    --warn-soft: rgba(220, 169, 95, 0.11);
+    width: 100%;
+    height: 100dvh;
+    min-height: 0;
+    overflow: hidden;
+    background: var(--bg);
+    color: var(--text);
+    color-scheme: dark;
+    font-family: "Segoe UI Variable Text", "PingFang SC", "Microsoft YaHei UI", sans-serif;
+    font-size: 12px;
+}
+
+.数据列,
+.操作列,
+.结果区,
+.组列表 {
+    display: grid;
+    gap: 12px;
+}
+
+.面板头,
+.组头 {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.面板,
+.指标卡,
+.组卡 {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface);
+}
+
+.面板 { padding: 14px; }
+
+.数据行 {
+    display: grid;
+    grid-template-columns: 88px minmax(0, 1fr);
+    gap: 12px;
+    align-items: start;
+}
+
+.数据行 span,
+.路径提示 { color: var(--muted); }
+
+.数据行 strong,
+.数据行 code {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    line-height: 1.5;
+    font-size: 12px;
+}
+
+.数据行 code,
+.表格次信息 code {
+    padding: 3px 7px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--bg);
+    font-family: "Cascadia Code", Consolas, monospace;
+}
+
+.路径列 code {
+    display: block;
+    max-width: 100%;
+    overflow: hidden;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.指标网格 {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 1px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--border);
+}
+
+.指标卡 {
+    padding: 12px 14px;
+    border: 0;
+    border-radius: 0;
+}
+
+.指标名 { display: block; color: var(--muted); font-size: 11px; }
+.指标值 { display: block; margin-top: 7px; font-size: 18px; line-height: 1; }
+
+.输入 {
+    width: 100%;
+    min-height: 34px;
+    padding: 0 10px;
+    border: 1px solid var(--border-strong);
+    border-radius: 6px;
+    background: var(--surface-raised);
+    color: var(--text);
+    font-size: 12px;
+}
+
+.输入::placeholder { color: var(--subtle); }
+
+.输入:focus {
+    border-color: var(--accent);
+    outline: 2px solid rgba(85, 191, 169, 0.2);
+    outline-offset: 0;
+}
+
+.主按钮,
+.次按钮,
+.危险按钮 {
+    min-height: 34px;
+    padding: 0 12px;
+    border: 1px solid var(--border-strong);
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease, transform 80ms ease;
+}
+
+.主按钮 {
+    border-color: var(--accent);
+    background: var(--accent);
+    color: #0d1715;
+}
+
+.次按钮 { background: var(--surface-raised); color: var(--text); }
+
+.危险按钮 {
+    border-color: rgba(231, 125, 95, 0.5);
+    background: var(--danger-soft);
+    color: #ffc4b3;
+}
+
+.主按钮:hover:enabled { background: var(--accent-strong); }
+.次按钮:hover:enabled { border-color: #535e68; background: var(--surface-hover); }
+.危险按钮:hover:enabled { border-color: var(--danger); background: rgba(231, 125, 95, 0.18); color: #ffd5c9; }
+.主按钮:active:enabled,
+.次按钮:active:enabled,
+.危险按钮:active:enabled { transform: translateY(1px); }
+
+.主按钮:focus-visible,
+.次按钮:focus-visible,
+.危险按钮:focus-visible,
+.图标控件:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+.主按钮:disabled,
+.次按钮:disabled,
+.危险按钮:disabled,
+.图标控件:disabled { cursor: not-allowed; opacity: 0.42; }
+
+.图标按钮,
+.图标控件 {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+}
+
+.图标控件 {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--surface-raised);
+    color: var(--muted);
+    cursor: pointer;
+}
+
+.双栏 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+
+.状态签 {
+    display: inline-flex;
+    align-items: center;
+    min-height: 22px;
+    padding: 0 7px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 650;
+}
+
+.状态签.neutral { color: var(--muted); background: var(--surface-raised); }
+.状态签.accent { border-color: rgba(85, 191, 169, 0.28); background: var(--accent-soft); color: #8fdfce; }
+.状态签.warn { border-color: rgba(231, 125, 95, 0.35); background: var(--danger-soft); color: #f3a990; }
+
+.表格壳 {
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface);
+}
+
+.结果表格 { width: 100%; border-collapse: collapse; table-layout: fixed; }
+
+.结果表格 th,
+.结果表格 td {
+    padding: 9px 11px;
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+    vertical-align: top;
+    font-size: 11.5px;
+}
+
+.结果表格 th { position: sticky; top: 0; background: var(--surface-raised); color: var(--muted); }
+.结果表格 tbody tr:hover td { background: var(--surface-hover); }
+.候选主值 { overflow: hidden; color: var(--text-strong); font-weight: 650; text-overflow: ellipsis; white-space: nowrap; }
+.候选副值 { margin-top: 4px; overflow: hidden; color: var(--muted); font-size: 11.5px; text-overflow: ellipsis; white-space: nowrap; }
+
+.空态,
+.错误面板 {
+    display: grid;
+    min-height: 84px;
+    padding: 16px;
+    place-items: center;
+    border-radius: 8px;
+}
+
+.空态 { border: 1px dashed var(--border-strong); color: var(--muted); }
+.空态.小号 { min-height: 64px; }
+.错误面板 { border: 1px solid rgba(231, 125, 95, 0.35); background: var(--danger-soft); color: #ffc4b3; }
+
+@media (max-width: 1200px) {
+    .指标网格 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .双栏 { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 760px) {
+    .工作台 { --workspace-padding: 10px; }
+    .数据行 { grid-template-columns: 1fr; gap: 4px; }
+    .指标网格 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; }
+}

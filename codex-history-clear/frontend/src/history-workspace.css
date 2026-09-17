@@ -1,0 +1,221 @@
+.工具壳 {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    width: 100%;
+    height: 100dvh;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.顶部区 {
+    position: relative;
+    z-index: 10;
+    min-width: 0;
+    min-height: 0;
+}
+
+.顶部操作区 {
+    width: 100%;
+    max-width: 100vw;
+    min-width: 0;
+    overflow: hidden;
+    border-bottom: 1px solid var(--border);
+    background: rgba(16, 18, 20, 0.96);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16);
+    backdrop-filter: blur(14px);
+}
+
+.应用栏,
+.品牌区,
+.目录行,
+.顶部操作组,
+.工作区摘要,
+.顶部筛选行,
+.筛选标题,
+.设置操作组,
+.会话元信息 {
+    display: flex;
+    align-items: center;
+}
+
+.应用栏 {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    min-height: 62px;
+    padding: 10px var(--workspace-padding);
+    justify-content: space-between;
+    gap: 18px;
+}
+
+.品牌区 { min-width: 0; gap: 10px; }
+
+.品牌图标 {
+    display: grid;
+    flex: 0 0 auto;
+    width: 34px;
+    height: 34px;
+    place-items: center;
+    border: 1px solid rgba(85, 191, 169, 0.3);
+    border-radius: 8px;
+    background: var(--accent-soft);
+    color: var(--accent-strong);
+}
+
+.品牌文字 { min-width: 0; }
+
+.品牌文字 h1 {
+    margin: 0 0 3px;
+    color: var(--text-strong);
+    font-size: 14px;
+    font-weight: 650;
+    letter-spacing: 0;
+}
+
+.目录行 { min-width: 0; gap: 5px; color: var(--subtle); }
+
+.目录行 code {
+    max-width: min(50vw, 680px);
+    overflow: hidden;
+    font-size: 10.5px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.顶部操作组 { flex: 0 0 auto; gap: 8px; }
+
+.工作区摘要 {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    min-height: 43px;
+    overflow-x: auto;
+    padding: 0 var(--workspace-padding);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    scrollbar-width: none;
+}
+
+.工作区摘要::-webkit-scrollbar { display: none; }
+
+.扫描状态,
+.顶部信息项 {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: baseline;
+    min-height: 42px;
+    padding: 0 14px;
+    border-right: 1px solid var(--border);
+    gap: 7px;
+}
+
+.扫描状态 { align-items: center; padding-left: 0; color: var(--muted); }
+.扫描状态.accent { color: var(--accent-strong); }
+.扫描状态.warn { color: var(--danger-strong); }
+
+.顶部信息项 span { color: var(--subtle); font-size: 10.5px; white-space: nowrap; }
+.顶部信息项 strong { color: var(--text); font-size: 12px; font-weight: 650; white-space: nowrap; }
+.顶部信息项-accent strong { color: var(--accent-strong); }
+.顶部信息项-warn strong { color: var(--danger-strong); }
+
+.顶部信息按钮 {
+	border: 0;
+	border-right: 1px solid var(--border);
+	border-radius: 0;
+	background: transparent;
+	cursor: pointer;
+}
+
+.顶部信息按钮:hover { background: var(--surface-hover); }
+
+.顶部筛选行 {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    min-height: 50px;
+    padding: 7px var(--workspace-padding);
+    gap: 8px;
+}
+
+.筛选标题 {
+    flex: 0 0 auto;
+    gap: 6px;
+    padding-right: 6px;
+    color: var(--muted);
+    font-weight: 600;
+}
+
+.顶部筛选项 {
+    display: inline-grid;
+    grid-template-columns: auto minmax(92px, 1fr);
+    align-items: center;
+    min-width: 150px;
+    min-height: 34px;
+    padding-left: 9px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--surface);
+}
+
+.顶部筛选项 > span { color: var(--subtle); font-size: 10.5px; white-space: nowrap; }
+
+.筛选选择器 {
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    min-width: 0;
+    min-height: 32px;
+    padding: 0 8px;
+    border: 0;
+    background: transparent;
+    color: var(--text);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    gap: 12px;
+    outline: 0;
+}
+
+.顶部筛选项:focus-within { border-color: var(--accent); outline: 2px solid rgba(85, 191, 169, 0.14); }
+.项目筛选 { flex: 1 1 240px; min-width: 210px; }
+
+.错误横幅 {
+    margin: 10px var(--workspace-padding) 0;
+    padding: 10px 12px;
+    border: 1px solid rgba(231, 125, 95, 0.4);
+    border-radius: 6px;
+    background: #2a1b18;
+    color: #ffc4b3;
+}
+
+.主工作区,
+.主内容列 {
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.主工作区 {
+    display: grid;
+    padding: var(--workspace-padding);
+}
+
+@media (max-width: 1100px) {
+    .顶部筛选行 { flex-wrap: wrap; }
+    .筛选标题 { width: 100%; }
+    .顶部筛选项 { flex: 1 1 180px; }
+}
+
+@media (max-width: 760px) {
+    .应用栏 { align-items: flex-start; flex-direction: column; gap: 10px; }
+    .顶部操作组 { width: 100%; }
+    .顶部操作组 > button { flex: 1 1 0; }
+    .目录行 code { max-width: calc(100vw - 84px); }
+    .工作区摘要 { padding-right: 0; }
+    .顶部筛选项 { flex: 1 1 calc(50% - 4px); min-width: 0; }
+    .项目筛选 { flex-basis: 100%; }
+}

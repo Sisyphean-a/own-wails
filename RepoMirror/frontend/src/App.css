@@ -1,0 +1,6 @@
+@import "./styles/tokens.css";
+@import "./styles/shell.css";
+@import "./styles/header.css";
+@import "./styles/diff-panel.css";
+@import "./styles/target-panel.css";
+@import "./styles/status-bar.css";

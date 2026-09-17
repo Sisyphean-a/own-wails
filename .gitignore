@@ -1,0 +1,12 @@
+# Root tooling and temporary state
+.codegraph/
+.tmp/
+
+# Shared local/build artifacts
+**/node_modules/
+**/frontend/dist/
+**/build/bin/
+**/frontend/package.json.md5
+
+# Test/build executables accidentally produced beside source
+**/*test.exe

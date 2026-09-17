@@ -1,0 +1,65 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  font-family: "Nunito", "PingFang SC", "Microsoft YaHei", sans-serif;
+  color: #0f172a;
+  background-color: #eef2f6;
+  --panel-bg: #ffffff;
+  --line-soft: #e2e8f0;
+  --tab-bg: #f1f5f9;
+  --tab-hover: #e2e8f0;
+  --tab-active-bg: #0f172a;
+  --tab-active-fg: #ffffff;
+}
+
+html,
+body,
+#app {
+  margin: 0;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+}
+
+.app-shell {
+  background:
+    radial-gradient(circle at 12% -10%, rgb(148 163 184 / 22%) 0%, rgb(148 163 184 / 0%) 30%),
+    radial-gradient(circle at 88% -12%, rgb(186 230 253 / 28%) 0%, rgb(186 230 253 / 0%) 34%),
+    linear-gradient(180deg, #f8fafc 0%, #eef2f6 100%);
+}
+
+.app-container {
+  width: min(100%, 1800px);
+  margin: 0 auto;
+}
+
+.tab-btn {
+  border: 1px solid transparent;
+  border-radius: 0.75rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  line-height: 1.25rem;
+  white-space: nowrap;
+  transition: background-color 160ms ease, color 160ms ease, border-color 160ms ease;
+}
+
+.tab-btn-idle {
+  background: var(--tab-bg);
+  color: #334155;
+}
+
+.tab-btn-idle:hover {
+  background: var(--tab-hover);
+}
+
+.tab-btn-active {
+  background: var(--tab-active-bg);
+  color: var(--tab-active-fg);
+}
+
+button {
+  white-space: nowrap;
+}

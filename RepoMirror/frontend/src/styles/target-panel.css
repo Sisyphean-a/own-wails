@@ -1,0 +1,243 @@
+.target-panel {
+  min-height: 0;
+  background: var(--panel-alt);
+  border-left: 1px solid var(--border-main);
+  display: flex;
+  flex-direction: column;
+}
+
+.target-header {
+  background: var(--panel-top);
+}
+
+.target-slot {
+  color: var(--text-faint);
+  font-family: var(--font-mono);
+}
+
+.target-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.target-summary-block,
+.summary-section,
+.commit-section,
+.target-actions {
+  padding: 16px;
+}
+
+.target-summary-block {
+  padding-bottom: 12px;
+}
+
+.target-repo-line,
+.target-meta-line,
+.summary-row,
+.secondary-actions {
+  display: flex;
+  align-items: center;
+}
+
+.target-repo-line {
+  justify-content: space-between;
+}
+
+.target-name {
+  color: var(--text-main);
+  font: 700 15px/22px var(--font-mono);
+}
+
+.target-dirty {
+  font: 600 11px/16px var(--font-sans);
+}
+
+.target-meta-line {
+  gap: 8px;
+  padding-top: 4px;
+}
+
+.target-branch {
+  gap: 4px;
+  color: var(--text-muted);
+  font: 500 12px/18px var(--font-mono);
+}
+
+.target-changes {
+  color: var(--text-dim);
+  font: 500 11px/16px var(--font-sans);
+}
+
+.target-divider {
+  height: 1px;
+  margin: 10px 0;
+  background: var(--border-soft);
+}
+
+.section-label {
+  color: var(--text-dim);
+  font: 600 11px/16px var(--font-sans);
+  letter-spacing: 0.24px;
+}
+
+.summary-section {
+  padding-top: 0;
+  padding-bottom: 4px;
+}
+
+.summary-row {
+  min-height: 28px;
+}
+
+.summary-row:first-of-type {
+  min-height: 34px;
+  padding-top: 6px;
+}
+
+.summary-symbol,
+.summary-count {
+  font-family: var(--font-mono);
+  font-weight: 700;
+}
+
+.summary-symbol {
+  width: 20px;
+  padding-right: 6px;
+  text-align: right;
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.summary-count {
+  width: 28px;
+  font-size: 15px;
+  line-height: 22px;
+}
+
+.summary-label {
+  color: var(--text-dim);
+  font: 500 12px/18px var(--font-sans);
+}
+
+.summary-symbol.added,
+.summary-count.added {
+  color: #3ddc97;
+}
+
+.summary-symbol.modified,
+.summary-count.modified {
+  color: #c9a227;
+}
+
+.summary-symbol.deleted,
+.summary-count.deleted {
+  color: #e05c5c;
+}
+
+.commit-section {
+  padding-top: 10px;
+}
+
+.commit-textarea {
+  width: 100%;
+  min-height: 88px;
+  margin-top: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--border-soft);
+  border-radius: 6px;
+  outline: 0;
+  resize: none;
+  background: var(--panel-shell);
+  color: rgba(201, 209, 217, 0.92);
+  font: 500 12px/18px var(--font-mono);
+}
+
+.ai-key-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.ai-key-input {
+  flex: 1;
+  min-width: 0;
+  padding: 9px 12px;
+  border: 1px solid var(--border-soft);
+  border-radius: 6px;
+  outline: 0;
+  background: var(--panel-shell);
+  color: rgba(201, 209, 217, 0.92);
+  font: 500 12px/18px var(--font-mono);
+}
+
+.ai-key-input::placeholder {
+  color: rgba(201, 209, 217, 0.5);
+}
+
+.ai-key-button {
+  flex: 0 0 auto;
+  width: 92px;
+}
+
+.ai-key-status {
+  padding-top: 6px;
+  color: var(--text-dim);
+  font: 500 11px/16px var(--font-sans);
+}
+
+.commit-textarea::placeholder {
+  color: rgba(201, 209, 217, 0.5);
+}
+
+.ai-generate-button {
+  margin-top: 8px;
+}
+
+.commit-helper {
+  padding-top: 6px;
+  color: var(--text-dim);
+  font: 500 11px/16px var(--font-sans);
+}
+
+.target-actions {
+  margin-top: auto;
+  padding-top: 0;
+}
+
+.sync-button,
+.secondary-button {
+  width: 100%;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.sync-button {
+  height: 38px;
+  border: 1px solid var(--button-green-border);
+  background: var(--button-green);
+  color: var(--text-success);
+  font: 600 13px/19px var(--font-sans);
+}
+
+.secondary-actions {
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.secondary-button {
+  flex: 1;
+  height: 34px;
+  border: 1px solid #1e2b38;
+  background: transparent;
+  color: var(--text-dim);
+  font: 600 12px/18px var(--font-sans);
+}
+
+.button-icon {
+  width: 11px;
+  height: 11px;
+}

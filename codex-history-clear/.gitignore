@@ -1,0 +1,6 @@
+build/bin
+node_modules
+frontend/dist
+.codegraph
+.codex
+frontend/package.json.md5
