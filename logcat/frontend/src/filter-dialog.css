@@ -1,0 +1,244 @@
+.dialog-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: var(--surface-overlay);
+  backdrop-filter: blur(6px);
+}
+
+.dialog-card {
+  width: min(680px, 100%);
+  max-height: min(84vh, 760px);
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--dialog-card-bg);
+  box-shadow: var(--shadow-dialog);
+  overflow: hidden;
+}
+
+.dialog-header,
+.dialog-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  background: var(--dialog-section-bg);
+}
+
+.dialog-header {
+  border-bottom: 1px solid var(--dialog-main-header-border);
+}
+
+.dialog-footer {
+  border-top: 1px solid var(--dialog-main-header-border);
+}
+
+.dialog-body {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  background: var(--dialog-body-bg);
+  overflow: auto;
+}
+
+.dialog-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-strong);
+}
+
+.dialog-subtitle {
+  margin-top: 4px;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.dialog-field {
+  display: grid;
+  gap: 8px;
+}
+
+.dialog-field > span,
+.dialog-field-header {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.dialog-field-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.dialog-input,
+.dialog-select,
+.dialog-preview {
+  width: 100%;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  background: var(--surface-input-strong);
+  color: var(--text);
+  box-shadow: inset 0 1px 0 var(--chip-outline);
+}
+
+.dialog-input,
+.dialog-select {
+  height: 32px;
+  padding: 0 12px;
+}
+
+.dialog-preview {
+  min-height: 88px;
+  padding: 10px 12px;
+  resize: vertical;
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.dialog-card .ghost-button,
+.dialog-card .text-button {
+  height: 30px;
+  padding: 0 14px;
+  border-radius: 7px;
+  border-color: var(--border-strong);
+  background: var(--surface-card-muted);
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.dialog-card .ghost-button:hover,
+.dialog-card .text-button:hover {
+  background: var(--surface-hover-strong);
+}
+
+.dialog-card .text-button.primary {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-contrast);
+}
+
+.dialog-card .text-button.primary:hover {
+  background: var(--accent-hover);
+}
+
+.dialog-card .text-button.secondary {
+  background: var(--surface-card-muted);
+  color: var(--text-secondary);
+}
+
+.rule-groups {
+  display: grid;
+  gap: 12px;
+}
+
+.rule-group-card {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--dialog-rule-bg);
+}
+
+.rule-group-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.rule-group-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--dialog-rule-title);
+}
+
+.rule-group-hint {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.rule-condition-list {
+  display: grid;
+  gap: 10px;
+}
+
+.rule-condition-row {
+  display: grid;
+  grid-template-columns: 52px 100px 110px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+}
+
+.rule-join {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 32px;
+  border: 1px solid var(--dialog-rule-join-border);
+  border-radius: 7px;
+  background: var(--dialog-rule-join-bg);
+  color: var(--dialog-rule-join-text);
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 11px;
+}
+
+.rule-join.muted {
+  color: var(--text-muted);
+}
+
+.rule-value-input {
+  min-width: 0;
+}
+
+.mini-button {
+  height: 28px;
+  padding: 0 10px;
+  font-size: 11px;
+}
+
+.dialog-error {
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--dialog-danger-border);
+  background: var(--dialog-danger-bg);
+  color: var(--dialog-danger-text);
+  font-size: 12px;
+}
+
+.dialog-close {
+  min-width: 56px;
+}
+
+@media (max-width: 820px) {
+  .dialog-overlay {
+    padding: 12px;
+  }
+
+  .dialog-card {
+    max-height: 94vh;
+  }
+
+  .rule-condition-row {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .rule-join,
+  .rule-condition-row .mini-button {
+    grid-column: span 2;
+  }
+
+  .rule-value-input,
+  .level-select {
+    grid-column: span 2;
+  }
+}
