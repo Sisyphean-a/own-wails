@@ -1,0 +1,126 @@
+.player-panel {
+  gap: 14px;
+  overflow: hidden;
+}
+
+.transport-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+}
+
+.play-toggle,
+.export-button {
+  min-width: 96px;
+  padding: 13px 18px;
+  border: 0;
+  border-radius: 16px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 160ms ease, opacity 160ms ease, border-color 160ms ease;
+}
+
+.play-toggle {
+  background: linear-gradient(135deg, #f4f7ff, #ced8f8);
+  color: #102042;
+}
+
+.export-button {
+  background: linear-gradient(135deg, var(--primary), var(--primary-strong));
+  color: #fff;
+  box-shadow: 0 14px 28px rgba(36, 77, 191, 0.24);
+}
+
+.play-toggle:hover:not(:disabled),
+.export-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.play-toggle:disabled,
+.export-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.56;
+  transform: none;
+  box-shadow: none;
+}
+
+.timeline-block {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.timeline-meta {
+  display: flex;
+  justify-content: space-between;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.player-controls {
+  display: grid;
+  grid-template-columns: minmax(160px, 0.7fr) auto minmax(220px, 0.9fr);
+  gap: 12px;
+  align-items: center;
+}
+
+.status-chip,
+.switch-row,
+.slider-row {
+  min-width: 0;
+  display: grid;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  font-size: 13px;
+}
+
+.status-chip {
+  display: flex;
+  color: var(--text-muted);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.status-chip.success {
+  border-color: rgba(85, 194, 156, 0.2);
+  color: #b7f3dd;
+}
+
+.status-chip.danger {
+  border-color: rgba(255, 110, 134, 0.24);
+  color: #ffc0cb;
+}
+
+.switch-row {
+  grid-template-columns: auto auto;
+}
+
+.switch-row input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+}
+
+.slider-row {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+}
+
+@media (max-width: 960px) {
+  .transport-row,
+  .player-controls {
+    grid-template-columns: 1fr;
+  }
+
+  .play-toggle,
+  .export-button {
+    width: 100%;
+  }
+}

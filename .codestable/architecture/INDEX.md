@@ -4,11 +4,12 @@
 
 | 范围 | 当前入口 | 负责内容 |
 | --- | --- | --- |
-| `workspace` | `README.md`、本页 | 四个独立 Wails 应用的单仓库组织、构建入口和记忆边界 |
+| `workspace` | `README.md`、本页 | 五个独立 Wails 应用的单仓库组织、构建入口和记忆边界 |
 | `package:codex-history-clear` | [codex-history-clear.md](packages/codex-history-clear.md) | Codex 本地历史发现、重复分析、删除计划、备份、回滚和证据导出 |
 | `package:repomirror` | [repomirror.md](packages/repomirror.md) | 两个 Git 仓库之间的差异计算、镜像、提交和推送 |
 | `package:gist-sync` | [gist-sync.md](packages/gist-sync.md) | 配置集、加密快照、GitHub Gist 同步、冲突预检和恢复 |
 | `package:logcat` | [logcat.md](packages/logcat.md) | Android Logcat 采集、过滤、状态流、详情和导出 |
+| `package:smart-announce` | [smart-announce.md](packages/smart-announce.md) | Minimax TTS 播报生成、试听、循环播放和音频导出 |
 
 ## 运行拓扑
 
@@ -17,7 +18,8 @@ own-wails/
   ├─ codex-history-clear/  -> 独立 Wails + Go + React 应用
   ├─ RepoMirror/           -> 独立 Wails + Go + React 应用
   ├─ GistSync/             -> 独立 Wails + Go + Vue 应用
-  └─ logcat/               -> 独立 Wails + Go + React 应用
+  ├─ logcat/               -> 独立 Wails + Go + React 应用
+  └─ SmartAnnounce/        -> 独立 Wails + Go + Vue 应用
 ```
 
 根目录不提供共享 Wails 宿主。每个子项目分别嵌入自己的 `frontend/dist`，分别解析自己的 `wails.json`，并使用自己的 Go 模块和前端锁文件。
@@ -35,3 +37,4 @@ own-wails/
 - 修改 `RepoMirror/`：额外读取 [repomirror.md](packages/repomirror.md) 和 [repomirror.md](../requirements/contexts/repomirror.md)。
 - 修改 `GistSync/`：额外读取 [gist-sync.md](packages/gist-sync.md) 和 [gist-sync.md](../requirements/contexts/gist-sync.md)。
 - 修改 `logcat/`：额外读取 [logcat.md](packages/logcat.md) 和 [logcat.md](../requirements/contexts/logcat.md)。
+- 修改 `SmartAnnounce/`：额外读取 [smart-announce.md](packages/smart-announce.md) 和 [smart-announce.md](../requirements/contexts/smart-announce.md)。
