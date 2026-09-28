@@ -20,13 +20,13 @@ type Service struct {
 	storage AudioStorage
 }
 
-func NewDefaultService() (*Service, error) {
+func NewDefaultService(settings *SettingsStore) (*Service, error) {
 	storage, err := NewStorage()
 	if err != nil {
 		return nil, err
 	}
 
-	return NewService(NewMinimaxClient(), storage)
+	return NewService(NewMinimaxClient(settings), storage)
 }
 
 func NewService(client Synthesizer, storage AudioStorage) (*Service, error) {

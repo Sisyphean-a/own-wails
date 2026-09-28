@@ -70,6 +70,42 @@ export namespace broadcast {
 	        this.audioSampleRate = source["audioSampleRate"];
 	    }
 	}
+	export class SettingsInfo {
+	    model: string;
+	    hasApiKey: boolean;
+	    proxyMode: string;
+	    proxyUrl: string;
+
+	    static createFrom(source: any = {}) {
+	        return new SettingsInfo(source);
+	    }
+
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.model = source["model"];
+	        this.hasApiKey = source["hasApiKey"];
+	        this.proxyMode = source["proxyMode"];
+	        this.proxyUrl = source["proxyUrl"];
+	    }
+	}
+	export class SettingsUpdate {
+	    apiKey: string;
+	    model: string;
+	    proxyMode: string;
+	    proxyUrl: string;
+
+	    static createFrom(source: any = {}) {
+	        return new SettingsUpdate(source);
+	    }
+
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.apiKey = source["apiKey"];
+	        this.model = source["model"];
+	        this.proxyMode = source["proxyMode"];
+	        this.proxyUrl = source["proxyUrl"];
+	    }
+	}
 
 }
 

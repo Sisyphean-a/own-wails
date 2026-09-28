@@ -2,15 +2,15 @@ package main
 
 import "testing"
 
-func TestDefaultWindowLayoutUsesCompactDesktopDimensions(t *testing.T) {
+func TestDefaultWindowLayoutFitsTheWorkbench(t *testing.T) {
 	layout := defaultWindowLayout()
 
-	if layout.Width != 1180 {
-		t.Fatalf("expected width 1180, got %d", layout.Width)
+	if layout.Width != 1280 {
+		t.Fatalf("expected width 1280, got %d", layout.Width)
 	}
 
-	if layout.Height != 760 {
-		t.Fatalf("expected height 760, got %d", layout.Height)
+	if layout.Height != 820 {
+		t.Fatalf("expected height 820, got %d", layout.Height)
 	}
 
 	if layout.MinWidth != 980 {

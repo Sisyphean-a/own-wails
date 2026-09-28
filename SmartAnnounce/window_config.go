@@ -9,8 +9,8 @@ type windowLayout struct {
 
 func defaultWindowLayout() windowLayout {
 	return windowLayout{
-		Width:     1180,
-		Height:    760,
+		Width:     1280,
+		Height:    820,
 		MinWidth:  980,
 		MinHeight: 680,
 	}

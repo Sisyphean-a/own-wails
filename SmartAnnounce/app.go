@@ -12,21 +12,41 @@ import (
 type App struct {
 	ctx              context.Context
 	broadcastService *broadcast.Service
+	settings         *broadcast.SettingsStore
 }
 
 func NewApp() (*App, error) {
-	service, err := broadcast.NewDefaultService()
+	settings, err := broadcast.NewSettingsStore()
+	if err != nil {
+		return nil, err
+	}
+	service, err := broadcast.NewDefaultService(settings)
 	if err != nil {
 		return nil, err
 	}
 
 	return &App{
 		broadcastService: service,
+		settings:         settings,
 	}, nil
 }
 
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
+}
+
+func (a *App) GetMinimaxSettings() (broadcast.SettingsInfo, error) {
+	if a.settings == nil {
+		return broadcast.SettingsInfo{}, errors.New("配置服务尚未完成初始化")
+	}
+	return a.settings.Info()
+}
+
+func (a *App) SaveMinimaxSettings(req broadcast.SettingsUpdate) (broadcast.SettingsInfo, error) {
+	if a.settings == nil {
+		return broadcast.SettingsInfo{}, errors.New("配置服务尚未完成初始化")
+	}
+	return a.settings.Save(req)
 }
 
 func (a *App) GenerateBroadcast(req broadcast.GenerateRequest) (broadcast.GenerateResult, error) {

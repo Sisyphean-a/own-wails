@@ -5,3 +5,7 @@ import {broadcast} from '../models';
 export function ExportBroadcast(arg1:broadcast.ExportRequest):Promise<broadcast.ExportResult>;
 
 export function GenerateBroadcast(arg1:broadcast.GenerateRequest):Promise<broadcast.GenerateResult>;
+
+export function GetMinimaxSettings():Promise<broadcast.SettingsInfo>;
+
+export function SaveMinimaxSettings(arg1:broadcast.SettingsUpdate):Promise<broadcast.SettingsInfo>;

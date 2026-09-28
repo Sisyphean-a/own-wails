@@ -9,3 +9,11 @@ export function ExportBroadcast(arg1) {
 export function GenerateBroadcast(arg1) {
   return window['go']['main']['App']['GenerateBroadcast'](arg1);
 }
+
+export function GetMinimaxSettings() {
+  return window['go']['main']['App']['GetMinimaxSettings']();
+}
+
+export function SaveMinimaxSettings(arg1) {
+  return window['go']['main']['App']['SaveMinimaxSettings'](arg1);
+}

@@ -8,15 +8,12 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
+	"net/url"
 	"strings"
 	"time"
 )
 
-const (
-	defaultMinimaxEndpoint = "https://api.minimaxi.com/v1/t2a_v2"
-	defaultMinimaxModel    = "speech-2.8-hd"
-)
+const defaultMinimaxEndpoint = "https://api.minimaxi.com/v1/t2a_v2"
 
 type AudioMetadata struct {
 	DurationMillis  int
@@ -24,8 +21,7 @@ type AudioMetadata struct {
 }
 
 type MinimaxClient struct {
-	apiKey     string
-	model      string
+	settings   *SettingsStore
 	endpoint   string
 	httpClient *http.Client
 }
@@ -77,16 +73,9 @@ type minimaxExtraInfo struct {
 	Duration        int `json:"duration"`
 }
 
-func NewMinimaxClient() *MinimaxClient {
-	apiKey := strings.TrimSpace(os.Getenv("MINIMAX_API_KEY"))
-	model := strings.TrimSpace(os.Getenv("MINIMAX_TTS_MODEL"))
-	if model == "" {
-		model = defaultMinimaxModel
-	}
-
+func NewMinimaxClient(settings *SettingsStore) *MinimaxClient {
 	return &MinimaxClient{
-		apiKey:   apiKey,
-		model:    model,
+		settings: settings,
 		endpoint: defaultMinimaxEndpoint,
 		httpClient: &http.Client{
 			Timeout: 60 * time.Second,
@@ -95,21 +84,28 @@ func NewMinimaxClient() *MinimaxClient {
 }
 
 func (c *MinimaxClient) Synthesize(ctx context.Context, req GenerateRequest) ([]byte, AudioMetadata, error) {
-	if c.apiKey == "" {
-		return nil, AudioMetadata{}, fmt.Errorf("缺少环境变量 MINIMAX_API_KEY")
+	if c.settings == nil {
+		return nil, AudioMetadata{}, fmt.Errorf("Minimax 配置存储尚未初始化")
+	}
+	settings, err := c.settings.Load()
+	if err != nil {
+		return nil, AudioMetadata{}, err
+	}
+	if settings.APIKey == "" {
+		return nil, AudioMetadata{}, fmt.Errorf("请先在设置中配置 Minimax API Key")
 	}
 
-	payload, err := c.buildPayload(req)
+	payload, err := c.buildPayload(req, settings.Model)
 	if err != nil {
 		return nil, AudioMetadata{}, err
 	}
 
-	httpReq, err := c.newSynthesizeRequest(ctx, payload)
+	httpReq, err := c.newSynthesizeRequest(ctx, payload, settings.APIKey)
 	if err != nil {
 		return nil, AudioMetadata{}, err
 	}
 
-	body, err := c.executeRequest(httpReq)
+	body, err := c.executeRequest(httpReq, settings)
 	if err != nil {
 		return nil, AudioMetadata{}, err
 	}
@@ -117,9 +113,9 @@ func (c *MinimaxClient) Synthesize(ctx context.Context, req GenerateRequest) ([]
 	return parseSynthesizeResponse(body)
 }
 
-func (c *MinimaxClient) buildPayload(req GenerateRequest) ([]byte, error) {
+func (c *MinimaxClient) buildPayload(req GenerateRequest, model string) ([]byte, error) {
 	requestBody := minimaxRequest{
-		Model:  c.model,
+		Model:  model,
 		Text:   req.NormalizedText(),
 		Stream: false,
 		VoiceSetting: minimaxVoiceSetting{
@@ -146,20 +142,32 @@ func (c *MinimaxClient) buildPayload(req GenerateRequest) ([]byte, error) {
 	return payload, nil
 }
 
-func (c *MinimaxClient) newSynthesizeRequest(ctx context.Context, payload []byte) (*http.Request, error) {
+func (c *MinimaxClient) newSynthesizeRequest(ctx context.Context, payload []byte, apiKey string) (*http.Request, error) {
 	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, c.endpoint, bytes.NewReader(payload))
 	if err != nil {
 		return nil, fmt.Errorf("创建 TTS 请求失败: %w", err)
 	}
 
-	httpReq.Header.Set("Authorization", "Bearer "+c.apiKey)
+	httpReq.Header.Set("Authorization", "Bearer "+apiKey)
 	httpReq.Header.Set("Content-Type", "application/json")
 
 	return httpReq, nil
 }
 
-func (c *MinimaxClient) executeRequest(httpReq *http.Request) ([]byte, error) {
-	resp, err := c.httpClient.Do(httpReq)
+func (c *MinimaxClient) executeRequest(httpReq *http.Request, settings minimaxSettings) ([]byte, error) {
+	transport := http.DefaultTransport.(*http.Transport).Clone()
+	transport.Proxy = nil
+	if settings.ProxyMode == proxyCustom {
+		proxyURL, err := url.Parse(settings.ProxyURL)
+		if err != nil {
+			return nil, fmt.Errorf("解析代理地址失败: %w", err)
+		}
+		transport.Proxy = http.ProxyURL(proxyURL)
+	}
+	defer transport.CloseIdleConnections()
+	client := *c.httpClient
+	client.Transport = transport
+	resp, err := client.Do(httpReq)
 	if err != nil {
 		return nil, fmt.Errorf("调用 Minimax TTS 失败: %w", err)
 	}
