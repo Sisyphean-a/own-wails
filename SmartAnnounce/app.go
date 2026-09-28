@@ -13,6 +13,7 @@ type App struct {
 	ctx              context.Context
 	broadcastService *broadcast.Service
 	settings         *broadcast.SettingsStore
+	history          *broadcast.TextHistoryStore
 }
 
 func NewApp() (*App, error) {
@@ -24,10 +25,15 @@ func NewApp() (*App, error) {
 	if err != nil {
 		return nil, err
 	}
+	history, err := broadcast.NewTextHistoryStore()
+	if err != nil {
+		return nil, err
+	}
 
 	return &App{
 		broadcastService: service,
 		settings:         settings,
+		history:          history,
 	}, nil
 }
 
@@ -58,7 +64,31 @@ func (a *App) GenerateBroadcast(req broadcast.GenerateRequest) (broadcast.Genera
 		return broadcast.GenerateResult{}, errors.New("播报服务尚未完成初始化")
 	}
 
+	if err := req.Validate(); err != nil {
+		return broadcast.GenerateResult{}, err
+	}
+	if a.history == nil {
+		return broadcast.GenerateResult{}, errors.New("文案历史尚未完成初始化")
+	}
+	// Rule: 先持久化当次提交的文本，音频生成失败也不影响历史记录。
+	if _, err := a.history.Record(req.NormalizedText()); err != nil {
+		return broadcast.GenerateResult{}, err
+	}
 	return a.broadcastService.Generate(a.ctx, req)
+}
+
+func (a *App) ListTextHistory() ([]broadcast.TextHistoryEntry, error) {
+	if a.history == nil {
+		return nil, errors.New("文案历史尚未完成初始化")
+	}
+	return a.history.List()
+}
+
+func (a *App) DeleteTextHistory(id string) error {
+	if a.history == nil {
+		return errors.New("文案历史尚未完成初始化")
+	}
+	return a.history.Delete(id)
 }
 
 func (a *App) ExportBroadcast(req broadcast.ExportRequest) (broadcast.ExportResult, error) {

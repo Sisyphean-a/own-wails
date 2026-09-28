@@ -97,11 +97,16 @@ input[type=range]:disabled {
   font-weight: 400;
   letter-spacing: 0;
 }
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
 .settings-trigger {
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  margin-left: auto;
   padding: 6px 10px;
   border: 1px solid var(--line);
   border-radius: 4px;

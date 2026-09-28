@@ -75,11 +75,11 @@ export namespace broadcast {
 	    hasApiKey: boolean;
 	    proxyMode: string;
 	    proxyUrl: string;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new SettingsInfo(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.model = source["model"];
@@ -93,17 +93,35 @@ export namespace broadcast {
 	    model: string;
 	    proxyMode: string;
 	    proxyUrl: string;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new SettingsUpdate(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.apiKey = source["apiKey"];
 	        this.model = source["model"];
 	        this.proxyMode = source["proxyMode"];
 	        this.proxyUrl = source["proxyUrl"];
+	    }
+	}
+	export class TextHistoryEntry {
+	    id: string;
+	    text: string;
+	    day: string;
+	    createdAt: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new TextHistoryEntry(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.text = source["text"];
+	        this.day = source["day"];
+	        this.createdAt = source["createdAt"];
 	    }
 	}
 

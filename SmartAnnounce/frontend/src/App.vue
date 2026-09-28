@@ -1,6 +1,7 @@
 <script setup>
 import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
 import { ExportBroadcast, GenerateBroadcast, GetMinimaxSettings, SaveMinimaxSettings } from '../wailsjs/go/main/App'
+import HistoryDialog from './HistoryDialog.vue'
 
 const voices = [
   { id: 'female-chengshu', name: '成熟女性音色', description: '日常促销' },
@@ -17,6 +18,8 @@ const example = `亲爱的顾客朋友们，大家好！\n欢迎光临本超市�
 const audioRef = ref(null)
 const editorRef = ref(null)
 const settingsButtonRef = ref(null)
+const historyButtonRef = ref(null)
+const historyOpen = ref(false)
 const apiKeyRef = ref(null)
 const settings = reactive({
   open: false, loading: true, saving: false, error: '',
@@ -74,6 +77,20 @@ async function openSettings() {
   await loadSettings()
   await nextTick()
   apiKeyRef.value?.focus()
+}
+
+function closeHistory() {
+  historyOpen.value = false
+  nextTick(() => historyButtonRef.value?.focus())
+}
+
+function applyHistoryText(text) {
+  state.text = text
+  historyOpen.value = false
+  nextTick(() => {
+    state.notice = '已应用历史文案，请按需重新生成播报'
+    editorRef.value?.focus()
+  })
 }
 
 function closeSettings() {
@@ -223,7 +240,7 @@ watch(() => state.playbackVolume, value => { if (audioRef.value) audioRef.value.
   <div class="app-shell">
     <header class="topbar">
       <div class="brand"><span class="brand-icon" aria-hidden="true">◖))</span><span>SmartAnnounce</span><span class="brand-divider"></span><span class="brand-subtitle">播报工作台</span></div>
-      <button ref="settingsButtonRef" class="settings-trigger" type="button" :aria-label="settings.hasApiKey ? 'Minimax 设置' : 'Minimax 设置，尚未配置 API Key'" @click="openSettings"><span aria-hidden="true">⚙</span> 设置<span v-if="settings.loaded && !settings.hasApiKey" class="settings-indicator">未配置</span></button>
+      <div class="topbar-actions"><button ref="historyButtonRef" class="settings-trigger" type="button" @click="historyOpen = true">文案历史</button><button ref="settingsButtonRef" class="settings-trigger" type="button" :aria-label="settings.hasApiKey ? 'Minimax 设置' : 'Minimax 设置，尚未配置 API Key'" @click="openSettings"><span aria-hidden="true">⚙</span> 设置<span v-if="settings.loaded && !settings.hasApiKey" class="settings-indicator">未配置</span></button></div>
     </header>
 
     <main class="workspace">
@@ -256,6 +273,8 @@ watch(() => state.playbackVolume, value => { if (audioRef.value) audioRef.value.
       <div class="player-body"><button class="play-button" type="button" :disabled="!state.audioUri" :aria-label="state.playing ? '暂停试听' : '播放试听'" @click="togglePlayback">{{ state.playing ? 'Ⅱ' : '▶' }}</button><div class="track"><div class="track-name" :title="state.fileName || ''"><strong>{{ state.fileName || '尚未生成音频' }}</strong><span v-if="outOfDate" class="player-state stale"><span class="state-dot"></span>上一版本 · 请重新生成</span></div><div class="timeline"><span>{{ formatTime(state.currentTime) }}</span><input type="range" min="0" max="100" step="0.1" :value="progress" :disabled="!state.audioUri || !state.duration" aria-label="播放进度" :style="{ '--progress': `${progress}%` }" @input="seek"><span>{{ formatTime(state.duration) }}</span></div></div><div class="player-options"><label class="loop-option"><input v-model="state.loop" type="checkbox"><span>循环</span></label><div class="playback-volume"><label for="playback-volume">试听音量</label><input id="playback-volume" v-model.number="state.playbackVolume" type="range" min="0" max="1" step="0.05"><span>{{ Math.round(state.playbackVolume * 100) }}%</span></div></div><button class="export-button" type="button" :disabled="!state.audioUri || state.exporting" @click="exportAudio">{{ state.exporting ? '导出中…' : '导出 MP3' }} <span aria-hidden="true">↗</span></button></div>
     </section>
     <div v-if="state.error || state.notice" class="statusbar" role="status" aria-live="polite" :class="{ 'status-error': state.error, 'status-success': !state.error }">{{ state.error || state.notice }}</div>
+
+    <HistoryDialog v-if="historyOpen" :current-text="state.text" :generating="state.generating" @close="closeHistory" @apply="applyHistoryText" />
 
     <div v-if="settings.open" class="dialog-backdrop" @mousedown.self="closeSettings" @keydown.esc="closeSettings" @keydown.tab="trapSettingsFocus">
       <section class="settings-dialog" role="dialog" aria-modal="true" aria-labelledby="settings-title">
