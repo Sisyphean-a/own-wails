@@ -15,7 +15,7 @@ func TestSettingsStoreRoundTripAndKeyNotExposed(t *testing.T) {
 	}
 	store := &SettingsStore{path: filepath.Join(t.TempDir(), "minimax.json")}
 	initial, err := store.Info()
-	if err != nil || initial.Model != defaultMinimaxModel || initial.HasAPIKey || initial.ProxyMode != proxyDirect {
+	if err != nil || initial.Model != defaultMinimaxModel || initial.HasAPIKey || initial.ProxyMode != proxyDirect || initial.CustomVoiceID != "" {
 		t.Fatalf("initial settings: %+v, %v", initial, err)
 	}
 	if _, err := store.Save(SettingsUpdate{Model: "speech-2.8-hd"}); err == nil {
@@ -34,12 +34,25 @@ func TestSettingsStoreRoundTripAndKeyNotExposed(t *testing.T) {
 	if err != nil || loaded.APIKey != secret {
 		t.Fatalf("load failed: %v, key matches: %v", err, loaded.APIKey == secret)
 	}
-	if _, err := store.Save(SettingsUpdate{Model: "speech-2.8-turbo"}); err != nil {
-		t.Fatalf("save model preserving key: %v", err)
+	customID := "ttv-voice-2025060717322425-example"
+	info, err = store.Save(SettingsUpdate{Model: "speech-2.8-turbo", CustomVoiceID: "  " + customID + "  "})
+	if err != nil || info.CustomVoiceID != customID {
+		t.Fatalf("save custom voice: %+v, %v", info, err)
 	}
 	loaded, err = store.Load()
-	if err != nil || loaded.APIKey != secret || loaded.Model != "speech-2.8-turbo" {
-		t.Fatalf("updated config: model=%q, key matches=%v, err=%v", loaded.Model, loaded.APIKey == secret, err)
+	if err != nil || loaded.APIKey != secret || loaded.Model != "speech-2.8-turbo" || loaded.CustomVoiceID != customID {
+		t.Fatalf("updated config: %+v, err=%v", loaded, err)
+	}
+	if _, err := store.Save(SettingsUpdate{Model: defaultMinimaxModel, CustomVoiceID: "invalid id"}); err == nil {
+		t.Fatal("voice ID containing whitespace must be rejected")
+	}
+	loaded, err = store.Load()
+	if err != nil || loaded.CustomVoiceID != customID {
+		t.Fatalf("invalid voice ID replaced config: %+v, %v", loaded, err)
+	}
+	info, err = store.Save(SettingsUpdate{Model: defaultMinimaxModel})
+	if err != nil || info.CustomVoiceID != "" {
+		t.Fatalf("clear custom voice: %+v, %v", info, err)
 	}
 	if _, err := store.Save(SettingsUpdate{APIKey: "new-secret", Model: "speech-2.8-hd"}); err != nil {
 		t.Fatalf("replace key: %v", err)
@@ -87,8 +100,21 @@ func TestSettingsStoreLoadsPreProxyConfigAsDirect(t *testing.T) {
 		t.Fatal(err)
 	}
 	loaded, err := store.Load()
-	if err != nil || loaded.APIKey != "prior-key" || loaded.ProxyMode != proxyDirect {
+	if err != nil || loaded.APIKey != "prior-key" || loaded.ProxyMode != proxyDirect || loaded.CustomVoiceID != "" {
 		t.Fatalf("legacy config: mode=%q, key matches=%v, err=%v", loaded.ProxyMode, loaded.APIKey == "prior-key", err)
+	}
+}
+
+func TestValidateCustomVoiceID(t *testing.T) {
+	for _, id := range []string{"", "ttv-voice-2025060717322425-example", strings.Repeat("v", 256)} {
+		if err := validateCustomVoiceID(id); err != nil {
+			t.Fatalf("valid ID %q rejected: %v", id, err)
+		}
+	}
+	for _, id := range []string{"invalid id", "invalid\nvoice", "invalid\u3000voice", strings.Repeat("v", 257)} {
+		if err := validateCustomVoiceID(id); err == nil {
+			t.Fatalf("invalid ID %q accepted", id)
+		}
 	}
 }
 

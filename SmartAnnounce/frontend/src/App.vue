@@ -24,8 +24,8 @@ const apiKeyRef = ref(null)
 const settings = reactive({
   open: false, loading: true, saving: false, error: '',
   loaded: false, hasApiKey: false, model: 'speech-2.8-hd',
-  proxyMode: 'direct', proxyUrl: '',
-  draftKey: '', draftModel: 'speech-2.8-hd', draftProxyMode: 'direct', draftProxyUrl: '',
+  proxyMode: 'direct', proxyUrl: '', customVoiceId: '',
+  draftKey: '', draftModel: 'speech-2.8-hd', draftProxyMode: 'direct', draftProxyUrl: '', draftCustomVoiceId: '',
 })
 const state = reactive({
   text: '', voiceId: voices[0].id, speed: 1, volume: 1,
@@ -35,6 +35,9 @@ const state = reactive({
   generatedInput: '', currentTime: 0, duration: 0,
 })
 
+const voiceOptions = computed(() => settings.customVoiceId && !voices.some(voice => voice.id === settings.customVoiceId)
+  ? [...voices, { id: settings.customVoiceId, name: '自定义音色', description: settings.customVoiceId }]
+  : voices)
 const length = computed(() => [...state.text.trim()].length)
 const currentInput = computed(() => JSON.stringify([state.text.trim(), state.voiceId, state.speed, state.volume, settings.model]))
 const outOfDate = computed(() => Boolean(state.audioUri) && currentInput.value !== state.generatedInput)
@@ -55,10 +58,13 @@ async function loadSettings() {
     settings.hasApiKey = result.hasApiKey
     settings.proxyMode = result.proxyMode
     settings.proxyUrl = result.proxyUrl
+    settings.customVoiceId = result.customVoiceId || ''
+    if (!settings.loaded && settings.customVoiceId) state.voiceId = settings.customVoiceId
     settings.loaded = true
     settings.draftModel = result.model
     settings.draftProxyMode = result.proxyMode
     settings.draftProxyUrl = result.proxyUrl
+    settings.draftCustomVoiceId = settings.customVoiceId
     if (state.error.startsWith('读取 Minimax 配置失败：')) state.error = ''
     return result
   } catch (error) {
@@ -110,11 +116,17 @@ async function saveSettings() {
       apiKey: settings.draftKey, model: settings.draftModel,
       proxyMode: settings.draftProxyMode,
       proxyUrl: settings.draftProxyMode === 'custom' ? settings.draftProxyUrl : '',
+      customVoiceId: settings.draftCustomVoiceId,
     })
+    const previousVoiceId = settings.customVoiceId
     settings.model = result.model
     settings.hasApiKey = result.hasApiKey
     settings.proxyMode = result.proxyMode
     settings.proxyUrl = result.proxyUrl
+    settings.customVoiceId = result.customVoiceId
+    if ((previousVoiceId && state.voiceId === previousVoiceId) || (result.customVoiceId && result.customVoiceId !== previousVoiceId)) {
+      state.voiceId = result.customVoiceId || voices[0].id
+    }
     settings.loaded = true
     settings.open = false
     settings.draftKey = ''
@@ -255,7 +267,7 @@ watch(() => state.playbackVolume, value => { if (audioRef.value) audioRef.value.
         <div class="settings-content">
         <div class="section-heading"><h2>选择音色</h2></div>
         <div class="voice-list" role="radiogroup" aria-label="选择音色">
-          <button v-for="voice in voices" :key="voice.id" type="button" class="voice-option" :class="{ selected: state.voiceId === voice.id }" role="radio" :aria-checked="state.voiceId === voice.id" :disabled="state.generating" @click="state.voiceId = voice.id">
+          <button v-for="voice in voiceOptions" :key="voice.id" type="button" class="voice-option" :title="voice.id" :class="{ selected: state.voiceId === voice.id }" role="radio" :aria-checked="state.voiceId === voice.id" :disabled="state.generating" @click="state.voiceId = voice.id">
             <span class="voice-copy"><strong>{{ voice.name }}</strong><small>{{ voice.description }}</small></span><span class="radio-indicator" aria-hidden="true"></span>
           </button>
         </div>
@@ -285,6 +297,9 @@ watch(() => state.playbackVolume, value => { if (audioRef.value) audioRef.value.
           <label for="minimax-model">TTS 模型</label>
           <input id="minimax-model" v-model="settings.draftModel" type="text" spellcheck="false" :disabled="settings.loading || settings.saving">
           <p class="dialog-help">默认 speech-2.8-hd。密钥由 Windows 当前用户加密保存在本机。</p>
+          <label for="minimax-custom-voice">自定义音色 ID（可选）</label>
+          <input id="minimax-custom-voice" v-model="settings.draftCustomVoiceId" type="text" maxlength="256" autocomplete="off" spellcheck="false" placeholder="粘贴已创建音色的 Voice ID" :disabled="settings.loading || settings.saving">
+          <p class="dialog-help">在 MiniMax 创建音色后粘贴 Voice ID；保存后可在「选择音色」中使用。需为当前 API Key 可用的音色；留空则移除。</p>
           <fieldset class="proxy-settings">
             <legend>网络代理</legend>
             <label class="proxy-choice"><input v-model="settings.draftProxyMode" type="radio" value="direct" :disabled="settings.loading || settings.saving"> 直连（默认）</label>

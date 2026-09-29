@@ -75,6 +75,7 @@ export namespace broadcast {
 	    hasApiKey: boolean;
 	    proxyMode: string;
 	    proxyUrl: string;
+	    customVoiceId: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new SettingsInfo(source);
@@ -86,6 +87,7 @@ export namespace broadcast {
 	        this.hasApiKey = source["hasApiKey"];
 	        this.proxyMode = source["proxyMode"];
 	        this.proxyUrl = source["proxyUrl"];
+	        this.customVoiceId = source["customVoiceId"];
 	    }
 	}
 	export class SettingsUpdate {
@@ -93,6 +95,7 @@ export namespace broadcast {
 	    model: string;
 	    proxyMode: string;
 	    proxyUrl: string;
+	    customVoiceId: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new SettingsUpdate(source);
@@ -104,6 +107,7 @@ export namespace broadcast {
 	        this.model = source["model"];
 	        this.proxyMode = source["proxyMode"];
 	        this.proxyUrl = source["proxyUrl"];
+	        this.customVoiceId = source["customVoiceId"];
 	    }
 	}
 	export class TextHistoryEntry {

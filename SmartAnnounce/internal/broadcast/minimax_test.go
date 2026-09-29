@@ -18,7 +18,7 @@ func TestMinimaxBuildPayloadUsesRequestVolume(t *testing.T) {
 
 	payload, err := client.buildPayload(GenerateRequest{
 		Text:    "今日特价鸡蛋",
-		VoiceID: "female-shaonv",
+		VoiceID: "ttv-voice-2025060717322425-example",
 		Speed:   1.15,
 		Volume:  0.65,
 	}, defaultMinimaxModel)
@@ -31,8 +31,8 @@ func TestMinimaxBuildPayloadUsesRequestVolume(t *testing.T) {
 		t.Fatalf("json.Unmarshal() error = %v", err)
 	}
 
-	if request.VoiceSetting.Vol != 0.65 {
-		t.Fatalf("voice_setting.vol = %v, want %v", request.VoiceSetting.Vol, 0.65)
+	if request.VoiceSetting.Vol != 0.65 || request.VoiceSetting.VoiceID != "ttv-voice-2025060717322425-example" {
+		t.Fatalf("voice_setting = %+v, want custom voice and volume 0.65", request.VoiceSetting)
 	}
 }
 
@@ -105,15 +105,15 @@ func TestMinimaxClientUsesSavedSettingsInsteadOfEnvironment(t *testing.T) {
 			t.Errorf("authorization does not use saved key: %q", got)
 		}
 		var request minimaxRequest
-		if err := json.NewDecoder(r.Body).Decode(&request); err != nil || request.Model != "speech-2.8-turbo" {
-			t.Errorf("model = %q, err = %v", request.Model, err)
+		if err := json.NewDecoder(r.Body).Decode(&request); err != nil || request.Model != "speech-2.8-turbo" || request.VoiceSetting.VoiceID != "ttv-voice-2025060717322425-example" {
+			t.Errorf("request = %+v, err = %v", request, err)
 		}
 		w.Header().Set("Content-Type", "application/json")
 		_, _ = w.Write([]byte(`{"base_resp":{"status_code":0},"data":{"audio":"494433"}}`))
 	}))
 	defer server.Close()
 	client.endpoint = server.URL
-	if _, _, err := client.Synthesize(context.Background(), GenerateRequest{Text: "测试", VoiceID: "female-shaonv", Speed: 1, Volume: 1}); err != nil {
+	if _, _, err := client.Synthesize(context.Background(), GenerateRequest{Text: "测试", VoiceID: "ttv-voice-2025060717322425-example", Speed: 1, Volume: 1}); err != nil {
 		t.Fatalf("Synthesize() error = %v", err)
 	}
 	if _, err := os.Stat(store.path); err != nil {

@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"unicode"
 )
 
 const (
@@ -18,24 +19,27 @@ const (
 )
 
 type SettingsInfo struct {
-	Model     string `json:"model"`
-	HasAPIKey bool   `json:"hasApiKey"`
-	ProxyMode string `json:"proxyMode"`
-	ProxyURL  string `json:"proxyUrl"`
+	Model         string `json:"model"`
+	HasAPIKey     bool   `json:"hasApiKey"`
+	ProxyMode     string `json:"proxyMode"`
+	ProxyURL      string `json:"proxyUrl"`
+	CustomVoiceID string `json:"customVoiceId"`
 }
 
 type SettingsUpdate struct {
-	APIKey    string `json:"apiKey"`
-	Model     string `json:"model"`
-	ProxyMode string `json:"proxyMode"`
-	ProxyURL  string `json:"proxyUrl"`
+	APIKey        string `json:"apiKey"`
+	Model         string `json:"model"`
+	ProxyMode     string `json:"proxyMode"`
+	ProxyURL      string `json:"proxyUrl"`
+	CustomVoiceID string `json:"customVoiceId"`
 }
 
 type minimaxSettings struct {
-	APIKey    string
-	Model     string
-	ProxyMode string
-	ProxyURL  string
+	APIKey        string
+	Model         string
+	ProxyMode     string
+	ProxyURL      string
+	CustomVoiceID string
 }
 
 type settingsFile struct {
@@ -43,6 +47,7 @@ type settingsFile struct {
 	ProtectedAPIKey []byte `json:"protectedApiKey"`
 	ProxyMode       string `json:"proxyMode,omitempty"`
 	ProxyURL        string `json:"proxyUrl,omitempty"`
+	CustomVoiceID   string `json:"customVoiceId,omitempty"`
 }
 
 type SettingsStore struct {
@@ -69,7 +74,7 @@ func (s *SettingsStore) Info() (SettingsInfo, error) {
 	if err != nil {
 		return SettingsInfo{}, err
 	}
-	return SettingsInfo{Model: settings.Model, HasAPIKey: settings.APIKey != "", ProxyMode: settings.ProxyMode, ProxyURL: settings.ProxyURL}, nil
+	return SettingsInfo{Model: settings.Model, HasAPIKey: settings.APIKey != "", ProxyMode: settings.ProxyMode, ProxyURL: settings.ProxyURL, CustomVoiceID: settings.CustomVoiceID}, nil
 }
 
 func (s *SettingsStore) Save(update SettingsUpdate) (SettingsInfo, error) {
@@ -105,12 +110,16 @@ func (s *SettingsStore) Save(update SettingsUpdate) (SettingsInfo, error) {
 	if mode == proxyDirect {
 		proxyAddress = ""
 	}
+	voiceID := strings.TrimSpace(update.CustomVoiceID)
+	if err := validateCustomVoiceID(voiceID); err != nil {
+		return SettingsInfo{}, err
+	}
 
 	protected, err := protectSecret([]byte(key))
 	if err != nil {
 		return SettingsInfo{}, fmt.Errorf("加密 API Key 失败: %w", err)
 	}
-	data, err := json.Marshal(settingsFile{Model: model, ProtectedAPIKey: protected, ProxyMode: mode, ProxyURL: proxyAddress})
+	data, err := json.Marshal(settingsFile{Model: model, ProtectedAPIKey: protected, ProxyMode: mode, ProxyURL: proxyAddress, CustomVoiceID: voiceID})
 	if err != nil {
 		return SettingsInfo{}, fmt.Errorf("编码应用配置失败: %w", err)
 	}
@@ -140,7 +149,7 @@ func (s *SettingsStore) Save(update SettingsUpdate) (SettingsInfo, error) {
 	if err := os.Rename(file.Name(), s.path); err != nil {
 		return SettingsInfo{}, fmt.Errorf("替换应用配置失败: %w", err)
 	}
-	return SettingsInfo{Model: model, HasAPIKey: true, ProxyMode: mode, ProxyURL: proxyAddress}, nil
+	return SettingsInfo{Model: model, HasAPIKey: true, ProxyMode: mode, ProxyURL: proxyAddress, CustomVoiceID: voiceID}, nil
 }
 
 func (s *SettingsStore) load() (minimaxSettings, error) {
@@ -164,11 +173,21 @@ func (s *SettingsStore) load() (minimaxSettings, error) {
 	if err := validateProxy(stored.ProxyMode, stored.ProxyURL); err != nil {
 		return minimaxSettings{}, err
 	}
+	if err := validateCustomVoiceID(stored.CustomVoiceID); err != nil {
+		return minimaxSettings{}, err
+	}
 	key, err := unprotectSecret(stored.ProtectedAPIKey)
 	if err != nil {
 		return minimaxSettings{}, fmt.Errorf("解密 API Key 失败: %w", err)
 	}
-	return minimaxSettings{APIKey: string(key), Model: stored.Model, ProxyMode: stored.ProxyMode, ProxyURL: stored.ProxyURL}, nil
+	return minimaxSettings{APIKey: string(key), Model: stored.Model, ProxyMode: stored.ProxyMode, ProxyURL: stored.ProxyURL, CustomVoiceID: stored.CustomVoiceID}, nil
+}
+
+func validateCustomVoiceID(id string) error {
+	if len(id) > 256 || strings.IndexFunc(id, func(r rune) bool { return unicode.IsSpace(r) || unicode.IsControl(r) }) >= 0 {
+		return errors.New("自定义音色 ID 不能包含空白字符且不能超过 256 字符")
+	}
+	return nil
 }
 
 func validateProxy(mode, address string) error {
