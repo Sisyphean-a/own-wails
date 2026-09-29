@@ -4,8 +4,8 @@ import { ExportBroadcast, GenerateBroadcast, GetMinimaxSettings, SaveMinimaxSett
 import HistoryDialog from './HistoryDialog.vue'
 
 const voices = [
-  { id: 'female-chengshu', name: '成熟女性音色', description: '日常促销' },
   { id: 'Chinese (Mandarin)_News_Anchor', name: '新闻女声', description: '正式通知' },
+  { id: 'female-chengshu', name: '成熟女性音色', description: '日常促销' },
   { id: 'male-qn-jingying', name: '精英青年音色', description: '男声播报' },
   { id: 'Chinese (Mandarin)_Radio_Host', name: '电台男主播', description: '男声主持' },
   { id: 'female-yujie', name: '御姐音色', description: '鲜明风格' },
@@ -244,8 +244,7 @@ watch(() => state.playbackVolume, value => { if (audioRef.value) audioRef.value.
     </header>
 
     <main class="workspace">
-      <section class="compose-panel" aria-labelledby="compose-title">
-        <div class="section-heading"><h2 id="compose-title">播报文案</h2></div>
+      <section class="compose-panel" aria-label="播报文案">
         <div class="editor-frame" :class="{ invalid: length > 2000 }">
           <textarea ref="editorRef" v-model="state.text" aria-label="播报文案" placeholder="在这里写下要播报的内容…" spellcheck="false"></textarea>
           <div class="editor-footer"><div class="editor-actions"><button class="text-action" type="button" :disabled="state.generating" @click="state.text = example; editorRef?.focus()">填入示例</button><span class="action-divider"></span><button class="text-action" type="button" :disabled="!state.text || state.generating" @click="state.text = ''; editorRef?.focus()">清空</button></div><span class="counter" :class="{ invalid: length > 2000 }">{{ length }} <span>/ 2000 字</span></span></div>

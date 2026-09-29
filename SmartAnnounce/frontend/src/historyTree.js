@@ -1,9 +1,3 @@
-function preview(text) {
-  const firstLine = text.split(/\r?\n/, 1)[0].trim()
-  const chars = [...firstLine]
-  return chars.length > 22 ? `${chars.slice(0, 22).join('')}…` : firstLine
-}
-
 export function buildHistoryTree(entries) {
   const sorted = [...entries].sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt) || b.id.localeCompare(a.id))
   const years = new Map()
@@ -18,10 +12,10 @@ export function buildHistoryTree(entries) {
   }
 
   const dayNodes = days => [...days].map(([day, items]) => items.length === 1
-    ? { key: `day:${items[0].day}`, label: `${Number(day)} 日 · ${preview(items[0].text)}`, entry: items[0] }
+    ? { key: `day:${items[0].day}`, label: `${Number(day)} 日`, entry: items[0] }
     : {
-        key: `day:${items[0].day}`, label: `${Number(day)} 日 · ${items.length} 条`,
-        children: items.map(entry => ({ key: `entry:${entry.id}`, label: `${entry.createdAt.slice(11, 16)} · ${preview(entry.text)}`, entry })),
+        key: `day:${items[0].day}`, label: `${Number(day)} 日`,
+        children: items.map(entry => ({ key: `entry:${entry.id}`, label: entry.createdAt.slice(11, 16), entry })),
       })
   const monthNodes = months => [...months].map(([month, days]) => ({
     key: `month:${days.values().next().value[0].day.slice(0, 7)}`, label: `${Number(month)} 月`, children: dayNodes(days),
@@ -36,6 +30,17 @@ export function buildHistoryTree(entries) {
     tree = []
   }
   return { tree, sorted }
+}
+
+export function searchHistory(entries, query) {
+  const normalizedQuery = query.trim().toLocaleLowerCase()
+  if (!normalizedQuery) return []
+
+  return buildHistoryTree(entries).sorted.flatMap(entry => entry.text.split(/\r?\n/).flatMap((line, lineIndex) => (
+    line.toLocaleLowerCase().includes(normalizedQuery)
+      ? [{ entry, line, lineIndex }]
+      : []
+  )))
 }
 
 export function expandedPath(tree, id) {

@@ -1,14 +1,16 @@
 <script setup>
-import { computed, nextTick, onMounted, ref } from 'vue'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { ClipboardSetText } from '../wailsjs/runtime/runtime'
 import { DeleteTextHistory, ListTextHistory } from '../wailsjs/go/main/App'
-import { buildHistoryTree, expandedPath } from './historyTree'
+import { buildHistoryTree, expandedPath, searchHistory } from './historyTree'
 
 const props = defineProps({ currentText: { type: String, default: '' }, generating: Boolean })
 const emit = defineEmits(['close', 'apply'])
 const entries = ref([])
 const selectedId = ref('')
 const expanded = ref(new Set())
+const searchQuery = ref('')
+const focusedMatch = ref(null)
 const loading = ref(true)
 const error = ref('')
 const notice = ref('')
@@ -16,13 +18,21 @@ const pendingAction = ref('')
 const busy = ref(false)
 const confirmError = ref('')
 const closeButton = ref(null)
+const searchInput = ref(null)
+const historyTextRef = ref(null)
+const lineRefs = ref([])
 const confirmCancel = ref(null)
 const deleteButton = ref(null)
+
 function message(error) {
   return typeof error === 'string' ? error : error?.message || '操作失败，请稍后重试。'
 }
+
 const history = computed(() => buildHistoryTree(entries.value))
 const selected = computed(() => history.value.sorted.find(entry => entry.id === selectedId.value))
+const searchTerm = computed(() => searchQuery.value.trim())
+const searchResults = computed(() => searchHistory(entries.value, searchTerm.value))
+const selectedLines = computed(() => selected.value?.text.split(/\r?\n/) || [])
 const visibleNodes = computed(() => {
   const nodes = []
   function visit(items, depth) {
@@ -42,6 +52,8 @@ async function load() {
     entries.value = await ListTextHistory() || []
     if (!entries.value.some(entry => entry.id === selectedId.value)) selectedId.value = history.value.sorted[0]?.id || ''
     expanded.value = new Set(expandedPath(history.value.tree, selectedId.value) || [])
+    focusedMatch.value = null
+    lineRefs.value = []
   } catch (e) {
     entries.value = []
     selectedId.value = ''
@@ -49,6 +61,17 @@ async function load() {
   } finally {
     loading.value = false
   }
+}
+
+function setLineRef(element, index) {
+  if (element) lineRefs.value[index] = element
+  else delete lineRefs.value[index]
+}
+
+function revealEntry(id) {
+  selectedId.value = id
+  expanded.value = new Set(expandedPath(history.value.tree, id) || [])
+  lineRefs.value = []
 }
 
 function selectNode(node) {
@@ -60,8 +83,62 @@ function selectNode(node) {
     else next.add(node.key)
     expanded.value = next
   } else {
-    selectedId.value = node.entry.id
+    focusedMatch.value = null
+    revealEntry(node.entry.id)
+    nextTick(() => historyTextRef.value?.scrollTo({ top: 0, behavior: 'auto' }))
   }
+}
+
+function clearSearch() {
+  searchQuery.value = ''
+  focusedMatch.value = null
+  notice.value = ''
+  nextTick(() => searchInput.value?.focus())
+}
+
+async function selectSearchResult(result) {
+  const query = searchTerm.value
+  if (!query) return
+  notice.value = ''
+  error.value = ''
+  focusedMatch.value = { id: result.entry.id, lineIndex: result.lineIndex, query }
+  revealEntry(result.entry.id)
+  await nextTick()
+  lineRefs.value[result.lineIndex]?.scrollIntoView({ block: 'center', behavior: 'auto' })
+  notice.value = `已定位到 ${result.entry.day} 的匹配内容`
+}
+
+function highlightParts(text, query) {
+  const normalizedQuery = query.trim()
+  if (!normalizedQuery) return [{ text, match: false }]
+  const lowerText = text.toLocaleLowerCase()
+  const lowerQuery = normalizedQuery.toLocaleLowerCase()
+  const parts = []
+  let cursor = 0
+  let start = lowerText.indexOf(lowerQuery, cursor)
+  while (start >= 0) {
+    if (start > cursor) parts.push({ text: text.slice(cursor, start), match: false })
+    const end = start + normalizedQuery.length
+    parts.push({ text: text.slice(start, end), match: true })
+    cursor = end
+    start = lowerText.indexOf(lowerQuery, cursor)
+  }
+  if (cursor < text.length) parts.push({ text: text.slice(cursor), match: false })
+  return parts.length ? parts : [{ text, match: false }]
+}
+
+function isTargetLine(index) {
+  const target = focusedMatch.value
+  return Boolean(target && target.id === selected.value?.id && target.lineIndex === index && target.query === searchTerm.value)
+}
+
+function isSearchResultActive(result) {
+  const target = focusedMatch.value
+  return Boolean(target && target.id === result.entry.id && target.lineIndex === result.lineIndex && target.query === searchTerm.value)
+}
+
+function searchResultLabel(result) {
+  return `${result.entry.day} ${result.entry.createdAt.slice(11, 16)}：${result.line}`
 }
 
 function close() {
@@ -89,7 +166,7 @@ function cancelAction() {
 
 async function confirmAction() {
   if (pendingAction.value === 'apply') {
-    emit('apply', selected.value.text)
+    if (selected.value) emit('apply', selected.value.text)
     return
   }
   if (pendingAction.value !== 'delete' || busy.value || !selected.value) return
@@ -99,8 +176,11 @@ async function confirmAction() {
   try {
     await DeleteTextHistory(selectedId.value)
     entries.value = entries.value.filter(entry => entry.id !== selectedId.value)
-    selectedId.value = history.value.sorted[Math.min(index, history.value.sorted.length - 1)]?.id || ''
-    expanded.value = new Set(expandedPath(history.value.tree, selectedId.value) || [])
+    focusedMatch.value = null
+    const nextId = searchTerm.value
+      ? searchResults.value[0]?.entry.id || history.value.sorted[0]?.id || ''
+      : history.value.sorted[Math.min(index, history.value.sorted.length - 1)]?.id || ''
+    revealEntry(nextId)
     pendingAction.value = ''
     notice.value = '文案记录已删除'
     await nextTick()
@@ -132,7 +212,7 @@ function handleKeydown(event) {
   }
   if (event.key !== 'Tab') return
   const dialog = pendingAction.value ? event.currentTarget.querySelector('.history-confirm') : event.currentTarget.querySelector('.history-dialog')
-  const controls = [...dialog.querySelectorAll('button:not(:disabled)')]
+  const controls = [...dialog.querySelectorAll('button:not(:disabled), input:not(:disabled)')]
   if (!controls.length) return
   if (event.shiftKey && document.activeElement === controls[0]) {
     event.preventDefault()
@@ -143,8 +223,13 @@ function handleKeydown(event) {
   }
 }
 
+watch(searchQuery, () => {
+  focusedMatch.value = null
+  notice.value = ''
+})
+
 onMounted(() => {
-  closeButton.value?.focus()
+  searchInput.value?.focus()
   load()
 })
 </script>
@@ -152,23 +237,54 @@ onMounted(() => {
 <template>
   <div class="dialog-backdrop history-backdrop" @mousedown.self="close" @keydown="handleKeydown">
     <section class="history-dialog" role="dialog" aria-modal="true" aria-labelledby="history-title">
-      <header class="dialog-header" :inert="Boolean(pendingAction)" :aria-hidden="pendingAction ? 'true' : undefined"><h2 id="history-title">文案历史</h2><button ref="closeButton" type="button" class="dialog-close" aria-label="关闭文案历史" :disabled="busy" @click="close">×</button></header>
+      <header class="dialog-header" :inert="Boolean(pendingAction)" :aria-hidden="pendingAction ? 'true' : undefined">
+        <div class="history-title-group"><h2 id="history-title">文案历史</h2></div>
+        <button ref="closeButton" type="button" class="dialog-close" aria-label="关闭文案历史" :disabled="busy" @click="close">×</button>
+      </header>
+      <div class="history-searchbar" :inert="Boolean(pendingAction)" :aria-hidden="pendingAction ? 'true' : undefined">
+        <label class="history-search">
+          <span class="history-search-icon" aria-hidden="true">⌕</span>
+          <span class="sr-only">搜索全部文案</span>
+          <input ref="searchInput" v-model="searchQuery" type="search" autocomplete="off" spellcheck="false" placeholder="搜索全部文案，例如“红薯”">
+          <button v-if="searchQuery" type="button" class="history-search-clear" aria-label="清除搜索" @click="clearSearch">×</button>
+        </label>
+        <span v-if="searchTerm" class="history-result-count" role="status">{{ searchResults.length }} 条匹配</span>
+      </div>
       <div class="history-body" :inert="Boolean(pendingAction)" :aria-hidden="pendingAction ? 'true' : undefined">
-        <nav class="history-sidebar" aria-label="按日期浏览文案">
-          <p v-if="loading" class="history-hint" role="status">正在读取文案历史…</p>
-          <p v-else-if="error && !entries.length" class="history-hint" role="alert">读取失败：{{ error }}<br><button type="button" class="history-link" @click="load">重试</button></p>
-          <p v-else-if="!entries.length" class="history-hint">暂无文案记录</p>
-          <button v-for="node in visibleNodes" :key="node.key" type="button" class="history-row" :class="{ active: node.entry?.id === selectedId, group: node.children }" :style="{ paddingLeft: `${12 + node.depth * 16}px` }" :aria-expanded="node.children ? expanded.has(node.key) : undefined" :aria-current="node.entry?.id === selectedId ? 'true' : undefined" @click="selectNode(node)">
-            <span class="history-chevron" aria-hidden="true">{{ node.children ? (expanded.has(node.key) ? '▾' : '▸') : '·' }}</span><span class="history-row-label" :title="node.label">{{ node.label }}</span>
-          </button>
+        <nav class="history-sidebar" :aria-label="searchTerm ? '文案搜索结果' : '按日期浏览文案'">
+          <template v-if="searchTerm">
+            <p v-if="loading" class="history-hint" role="status">正在读取文案历史…</p>
+            <p v-else-if="error && !entries.length" class="history-hint" role="alert">读取失败：{{ error }}<br><button type="button" class="history-link" @click="load">重试</button></p>
+            <p v-else-if="!entries.length" class="history-hint">暂无文案记录</p>
+            <p v-else-if="!searchResults.length" class="history-search-empty" role="status">没有找到「{{ searchTerm }}」<br><small>换个关键词试试</small></p>
+            <div v-else class="history-search-results">
+              <button v-for="result in searchResults" :key="`${result.entry.id}:${result.lineIndex}`" type="button" class="history-search-result" :class="{ active: isSearchResultActive(result) }" :aria-current="isSearchResultActive(result) ? 'true' : undefined" :aria-label="searchResultLabel(result)" @click="selectSearchResult(result)">
+                <span class="history-result-meta">{{ result.entry.day }} · {{ result.entry.createdAt.slice(11, 16) }}</span>
+                <span class="history-result-line"><template v-for="(part, partIndex) in highlightParts(result.line, searchTerm)" :key="`${result.entry.id}:${result.lineIndex}:${partIndex}`"><mark v-if="part.match">{{ part.text }}</mark><template v-else>{{ part.text }}</template></template></span>
+              </button>
+            </div>
+          </template>
+          <template v-else>
+            <p v-if="loading" class="history-hint" role="status">正在读取文案历史…</p>
+            <p v-else-if="error && !entries.length" class="history-hint" role="alert">读取失败：{{ error }}<br><button type="button" class="history-link" @click="load">重试</button></p>
+            <p v-else-if="!entries.length" class="history-hint">暂无文案记录</p>
+            <button v-for="node in visibleNodes" :key="node.key" type="button" class="history-row" :class="{ active: node.entry?.id === selectedId, group: node.children }" :style="{ paddingLeft: `${12 + node.depth * 16}px` }" :aria-label="node.children ? `${node.label}，${node.children.length} 条记录` : node.entry ? `${node.entry.day} ${node.label}` : node.label" :aria-expanded="node.children ? expanded.has(node.key) : undefined" :aria-current="node.entry?.id === selectedId ? 'true' : undefined" @click="selectNode(node)">
+              <span class="history-chevron" aria-hidden="true">{{ node.children ? (expanded.has(node.key) ? '▾' : '▸') : '·' }}</span><span class="history-row-label" :title="node.label">{{ node.label }}</span>
+            </button>
+          </template>
         </nav>
         <div class="history-detail">
-          <template v-if="selected">
+          <template v-if="selected && (!searchTerm || focusedMatch)">
             <div class="history-meta"><strong>{{ selected.day }} · {{ selected.createdAt.slice(11, 16) }}</strong><span>当次提交的文案</span></div>
-            <article class="history-text" aria-label="历史文案正文">{{ selected.text }}</article>
+            <article ref="historyTextRef" class="history-text" aria-label="历史文案正文">
+              <span v-for="(line, index) in selectedLines" :key="`${selected.id}:${index}`" class="history-line" :class="{ 'is-target': isTargetLine(index) }" :ref="element => setLineRef(element, index)">
+                <template v-if="line"><template v-for="(part, partIndex) in highlightParts(line, searchTerm)" :key="`${selected.id}:${index}:${partIndex}`"><mark v-if="part.match">{{ part.text }}</mark><template v-else>{{ part.text }}</template></template></template>
+                <span v-else aria-hidden="true">&nbsp;</span>
+              </span>
+            </article>
             <div class="history-footer"><span class="history-feedback" role="status" aria-live="polite">{{ error && entries.length ? error : notice }}</span><button ref="deleteButton" class="history-delete" type="button" :disabled="busy" @click="startAction('delete')">删除记录</button><button class="dialog-cancel" type="button" @click="copyText">复制文案</button><button class="dialog-save" type="button" :disabled="generating" @click="startAction('apply')">应用到当前</button></div>
           </template>
-          <p v-else class="history-empty">{{ loading ? '正在读取…' : error ? '请重试读取文案历史' : '生成一次播报后，文案会出现在这里。' }}</p>
+          <p v-else class="history-empty">{{ loading ? '正在读取…' : error ? '请重试读取文案历史' : searchTerm ? '请选择左侧搜索结果查看完整文案。' : '生成一次播报后，文案会出现在这里。' }}</p>
         </div>
       </div>
       <div v-if="pendingAction" class="history-confirm-overlay">
@@ -186,6 +302,18 @@ onMounted(() => {
 <style scoped>
 .history-dialog { position:relative; width:min(900px,100%); height:min(85vh,680px); min-height:320px; display:flex; flex-direction:column; border:1px solid #3a4648; border-radius:8px; background:var(--surface); box-shadow:0 24px 64px rgba(0,0,0,.5); overflow:hidden; }
 .history-dialog .dialog-header { flex:none; }
+.history-title-group { min-width:0; }
+.history-searchbar { flex:none; display:flex; align-items:center; gap:12px; padding:10px 16px; border-bottom:1px solid var(--line); background:#15181a; }
+.sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+.history-search { min-width:0; flex:1; height:36px; display:flex; align-items:center; gap:8px; padding:0 10px; border:1px solid #404a4d; border-radius:5px; background:var(--surface-input); color:var(--muted); }
+.history-search:focus-within { border-color:var(--accent); }
+.history-search-icon { flex:none; color:var(--dim); font-size:18px; line-height:1; transform:rotate(-20deg); }
+.history-search input { min-width:0; flex:1; width:100%; height:32px; border:0; outline:0; background:transparent; color:var(--text); font-size:12px; }
+.history-search input::placeholder { color:var(--dim); }
+.history-search input::-webkit-search-cancel-button { display:none; }
+.history-search-clear { flex:none; width:22px; height:22px; padding:0; border:0; border-radius:3px; background:transparent; color:var(--dim); font-size:18px; line-height:1; }
+.history-search-clear:hover { background:var(--surface-raised); color:var(--text); }
+.history-result-count { flex:none; color:var(--dim); font-size:11px; white-space:nowrap; }
 .history-body { display:grid; grid-template-columns:minmax(220px,260px) minmax(0,1fr); flex:1; min-height:0; }
 .history-sidebar { min-width:0; overflow-y:auto; border-right:1px solid var(--line); padding:12px 8px; background:#15181a; }
 .history-row { width:100%; min-height:36px; display:flex; align-items:center; gap:8px; padding-right:10px; border:0; border-radius:4px; background:transparent; text-align:left; color:var(--muted); font-size:12px; }
@@ -196,10 +324,21 @@ onMounted(() => {
 .history-row-label { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .history-hint { padding:6px 12px; color:var(--muted); font-size:12px; line-height:1.7; }
 .history-link { margin-top:10px; padding:0; border:0; background:transparent; color:var(--accent); text-decoration:underline; }
+.history-search-empty { padding:28px 12px; color:var(--muted); font-size:12px; line-height:1.8; text-align:center; }
+.history-search-empty small { color:var(--dim); font-size:11px; }
+.history-search-results { margin:-12px -8px; }
+.history-search-result { width:100%; display:flex; flex-direction:column; align-items:stretch; gap:5px; padding:10px 12px; border:0; border-bottom:1px solid var(--line-soft); background:transparent; color:var(--text); text-align:left; }
+.history-search-result:hover { background:var(--surface-raised); }
+.history-search-result.active { background:var(--accent-soft); box-shadow:inset 2px 0 var(--accent); }
+.history-result-meta { color:var(--dim); font:11px Consolas,monospace; }
+.history-result-line { color:var(--text); font-size:12px; line-height:1.65; overflow-wrap:anywhere; }
+.history-result-line mark,.history-text mark { border-radius:2px; background:rgba(71,197,186,.24); color:var(--text); }
 .history-detail { min-width:0; min-height:0; display:flex; flex-direction:column; }
 .history-meta { flex:none; padding:19px 24px 13px; display:flex; align-items:baseline; gap:12px; border-bottom:1px solid var(--line-soft); font-size:13px; }
 .history-meta span { color:var(--dim); font-size:11px; }
-.history-text { flex:1; min-height:0; overflow-y:auto; white-space:pre-wrap; overflow-wrap:anywhere; padding:22px 24px; font-size:14px; line-height:1.95; }
+.history-text { flex:1; min-height:0; overflow-y:auto; overflow-x:hidden; white-space:pre-wrap; overflow-wrap:anywhere; padding:22px 24px; font-size:14px; line-height:1.95; }
+.history-line { display:block; min-height:1.95em; }
+.history-line.is-target { margin:0 -8px; padding:0 8px; border-left:2px solid var(--accent); border-radius:2px; background:var(--accent-soft); }
 .history-footer { min-height:64px; padding:12px 20px; display:flex; align-items:center; gap:8px; border-top:1px solid var(--line); }
 .history-feedback { min-width:0; flex:1; color:var(--accent); font-size:11px; overflow-wrap:anywhere; }
 .history-delete { border:0; background:transparent; color:var(--muted); font-size:12px; padding:8px; }
@@ -216,6 +355,8 @@ onMounted(() => {
 .history-danger:hover:not(:disabled) { background:rgba(240,139,131,.23); }
 @media(max-width:760px) {
   .history-dialog { height:min(90vh,680px); }
+  .history-searchbar { align-items:stretch; flex-direction:column; gap:7px; }
+  .history-result-count { align-self:flex-end; }
   .history-body { grid-template-columns:1fr; grid-template-rows:minmax(130px,32%) minmax(0,1fr); }
   .history-sidebar { border-right:0; border-bottom:1px solid var(--line); }
   .history-meta { padding:12px 16px; }

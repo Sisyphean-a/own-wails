@@ -11,7 +11,7 @@
 - `SmartAnnounce/main.go`、`window_config.go`：Wails 入口、默认窗口布局和资源嵌入。
 - `SmartAnnounce/app.go`：唯一 Wails 绑定边界，负责配置读取/保存、生成前记录文案、历史查询/删除、打开保存对话框和导出。
 - `SmartAnnounce/internal/broadcast/`：请求校验、Minimax TTS 客户端及仅作用于该客户端的代理策略、当前用户加密配置存储、文案历史存储、音频存储、MP3 元数据和导出。
-- `SmartAnnounce/frontend/src/App.vue`：文案/音色/参数工作台、生成与导出状态、上一版本标记及 HTML Audio 播放控制；`HistoryDialog.vue` 与 `historyTree.js` 负责历史浏览及应用/删除交互；`frontend/src/style.css` 负责桌面分栏、固定操作区和窄屏重排。
+- `SmartAnnounce/frontend/src/App.vue`：文案/音色/参数工作台、生成与导出状态、上一版本标记及 HTML Audio 播放控制；`HistoryDialog.vue` 与 `historyTree.js` 负责历史按日期浏览、全局命中行搜索及应用/删除交互；`frontend/src/style.css` 负责桌面分栏、固定操作区和窄屏重排。
 - `SmartAnnounce/frontend/wailsjs/`：Wails 生成的调用与模型代码，不是手写契约。
 
 ## 外部边界与安全规则
@@ -28,7 +28,7 @@
 
 ## 前端行为
 
-页面以文案编辑区、音色/参数设置区和固定试听区组织；右上角「文案历史」弹窗按数据跨度渐进展示年、月、日，单条记录由日行直接代表，多条时展开具体文案，右侧查看、复制、应用或经二次确认删除；设置弹窗配置 Minimax Key、模型和代理模式，首次缺 Key 时主动打开。默认窗口尺寸与两列音色列表匹配，使初始桌面视口能显示完整工作台。生成按钮保持在设置区底部，设置内容可独立滚动。生成成功后重置播放位置并加载新音频；播放、暂停、循环、播放音量和进度由 HTML Audio 驱动。生成结果与编辑草稿的版本关系由 `frontend/src/App.vue` 对照提交时输入来呈现，语义规则见 [SmartAnnounce TTS 播报](../../requirements/contexts/smart-announce.md)。生成或导出失败显示后端错误，未生成音频时不能播放或导出。
+页面以文案编辑区、音色/参数设置区和固定试听区组织，编辑区不再重复显示标题以保留连续工作空间，默认音色为新闻女声 `Chinese (Mandarin)_News_Anchor`；右上角「文案历史」弹窗按数据跨度渐进展示年、月、日，日期行只显示日期，同日多条时展开时间，全局搜索结果按命中行列出日期、时间和原文，选中后定位对应记录与命中行，右侧查看、复制、应用或经二次确认删除；设置弹窗配置 Minimax Key、模型和代理模式，首次缺 Key 时主动打开。默认窗口尺寸与两列音色列表匹配，使初始桌面视口能显示完整工作台。生成按钮保持在设置区底部，设置内容可独立滚动。生成成功后重置播放位置并加载新音频；播放、暂停、循环、播放音量和进度由 HTML Audio 驱动。生成结果与编辑草稿的版本关系由 `frontend/src/App.vue` 对照提交时输入来呈现，语义规则见 [SmartAnnounce TTS 播报](../../requirements/contexts/smart-announce.md)。生成或导出失败显示后端错误，未生成音频时不能播放或导出。
 
 ## 验证入口
 
