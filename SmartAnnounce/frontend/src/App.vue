@@ -43,6 +43,22 @@ const currentInput = computed(() => JSON.stringify([state.text.trim(), state.voi
 const outOfDate = computed(() => Boolean(state.audioUri) && currentInput.value !== state.generatedInput)
 const canGenerate = computed(() => length.value > 0 && length.value <= 2000 && settings.loaded && settings.hasApiKey && !state.generating)
 const progress = computed(() => state.duration > 0 ? Math.min(100, state.currentTime / state.duration * 100) : 0)
+const playbackPercent = computed(() => Math.round(state.playbackVolume * 100))
+const playbackPresets = [25, 50, 75, 100]
+
+function adjustPlaybackVolume(delta) {
+  state.playbackVolume = Math.max(0, Math.min(100, playbackPercent.value + delta)) / 100
+}
+
+function inputPlaybackVolume(event) {
+  const input = event.target
+  if (input.value !== '' && input.validity.valid) state.playbackVolume = Number(input.value) / 100
+}
+
+function commitPlaybackVolume(event) {
+  inputPlaybackVolume(event)
+  event.target.value = playbackPercent.value
+}
 
 function message(error) {
   if (typeof error === 'string') return error
@@ -281,7 +297,30 @@ watch(() => state.playbackVolume, value => { if (audioRef.value) audioRef.value.
     </main>
 
     <section class="player-panel" aria-label="试听与导出">
-      <div class="player-body"><button class="play-button" type="button" :disabled="!state.audioUri" :aria-label="state.playing ? '暂停试听' : '播放试听'" @click="togglePlayback">{{ state.playing ? 'Ⅱ' : '▶' }}</button><div class="track"><div class="track-name" :title="state.fileName || ''"><strong>{{ state.fileName || '尚未生成音频' }}</strong><span v-if="outOfDate" class="player-state stale"><span class="state-dot"></span>上一版本 · 请重新生成</span></div><div class="timeline"><span>{{ formatTime(state.currentTime) }}</span><input type="range" min="0" max="100" step="0.1" :value="progress" :disabled="!state.audioUri || !state.duration" aria-label="播放进度" :style="{ '--progress': `${progress}%` }" @input="seek"><span>{{ formatTime(state.duration) }}</span></div></div><div class="player-options"><label class="loop-option"><input v-model="state.loop" type="checkbox"><span>循环</span></label><div class="playback-volume"><label for="playback-volume">试听音量</label><input id="playback-volume" v-model.number="state.playbackVolume" type="range" min="0" max="1" step="0.05"><span>{{ Math.round(state.playbackVolume * 100) }}%</span></div></div><button class="export-button" type="button" :disabled="!state.audioUri || state.exporting" @click="exportAudio">{{ state.exporting ? '导出中…' : '导出 MP3' }} <span aria-hidden="true">↗</span></button></div>
+      <div class="player-body">
+        <button class="play-button" type="button" :disabled="!state.audioUri" :aria-label="state.playing ? '暂停试听' : '播放试听'" @click="togglePlayback">{{ state.playing ? 'Ⅱ' : '▶' }}</button>
+        <div class="track">
+          <div class="track-name" :title="state.fileName || ''"><strong>{{ state.fileName || '尚未生成音频' }}</strong><span v-if="outOfDate" class="player-state stale"><span class="state-dot"></span>上一版本 · 请重新生成</span></div>
+          <div class="timeline"><span>{{ formatTime(state.currentTime) }}</span><input type="range" min="0" max="100" step="0.1" :value="progress" :disabled="!state.audioUri || !state.duration" aria-label="播放进度" :style="{ '--progress': `${progress}%` }" @input="seek"><span>{{ formatTime(state.duration) }}</span></div>
+        </div>
+        <div class="player-options">
+          <label class="loop-option"><input v-model="state.loop" type="checkbox"><span>循环</span></label>
+          <div class="playback-volume" role="group" aria-label="试听音量，仅影响本机播放">
+            <div class="volume-header">
+              <div class="volume-presets" aria-label="常用音量">
+                <button v-for="preset in playbackPresets" :key="preset" type="button" :aria-pressed="playbackPercent === preset" :aria-label="`试听音量 ${preset}%`" @click="state.playbackVolume = preset / 100">{{ preset }}%</button>
+              </div>
+              <div class="volume-value"><input id="playback-volume-value" type="number" min="0" max="100" step="1" :value="playbackPercent" aria-label="试听音量百分比" title="输入 0–100 的整数，仅影响试听" @input="inputPlaybackVolume" @change="commitPlaybackVolume" @blur="commitPlaybackVolume" @keydown.enter="commitPlaybackVolume" @keydown.esc="commitPlaybackVolume"><span aria-hidden="true">%</span></div>
+            </div>
+            <div class="volume-controls">
+              <button class="volume-step" type="button" aria-label="试听音量降低 5%" title="降低 5%" :disabled="playbackPercent === 0" @click="adjustPlaybackVolume(-5)">−</button>
+              <input id="playback-volume" v-model.number="state.playbackVolume" type="range" min="0" max="1" step="0.01" aria-label="试听音量" :aria-valuetext="`${playbackPercent}%`" :style="{ '--volume-progress': `${playbackPercent}%` }">
+              <button class="volume-step" type="button" aria-label="试听音量提高 5%" title="提高 5%" :disabled="playbackPercent === 100" @click="adjustPlaybackVolume(5)">+</button>
+            </div>
+          </div>
+        </div>
+        <button class="export-button" type="button" :disabled="!state.audioUri || state.exporting" @click="exportAudio">{{ state.exporting ? '导出中…' : '导出 MP3' }} <span aria-hidden="true">↗</span></button>
+      </div>
     </section>
     <div v-if="state.error || state.notice" class="statusbar" role="status" aria-live="polite" :class="{ 'status-error': state.error, 'status-success': !state.error }">{{ state.error || state.notice }}</div>
 
