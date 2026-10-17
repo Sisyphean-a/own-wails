@@ -1,0 +1,10 @@
+{
+ "$schema": "https://wails.io/schemas/config.v2.json",
+ "name": "LanSync",
+ "outputfilename": "LanSync",
+ "info": {"companyName":"","productName":"局域同步","productVersion":"0.1.0","copyright":"","comments":"局域网文件同步"},
+ "frontend:install": "npm ci",
+ "frontend:build": "npm run build",
+ "frontend:dev:watcher": "npm run dev",
+ "frontend:dev:serverUrl": "auto"
+}
