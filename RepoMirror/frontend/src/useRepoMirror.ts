@@ -29,6 +29,7 @@ interface ViewModel {
   save: () => Promise<void>;
   refresh: () => Promise<void>;
   sync: () => Promise<void>;
+  syncCommitPush: () => Promise<boolean>;
   commit: (message: string) => Promise<boolean>;
   generateCommit: () => Promise<string>;
   saveAICommitAPIKey: (apiKey: string) => Promise<boolean>;
@@ -68,6 +69,7 @@ export function useRepoMirror(): ViewModel {
   const commit = useCallback((message: string) => commitAction(actionContext, message), [actionContext]);
   const generateCommit = useCallback(() => generateCommitAction(actionContext), [actionContext]);
   const saveAICommitAPIKey = useCallback((apiKey: string) => saveAICommitAPIKeyAction(actionContext, apiKey), [actionContext]);
+  const syncCommitPush = useCallback(() => syncCommitPushAction(actionContext), [actionContext]);
 
   return {
     busy,
@@ -79,6 +81,7 @@ export function useRepoMirror(): ViewModel {
     commit,
     generateCommit,
     saveAICommitAPIKey,
+    syncCommitPush,
     ...action,
   };
 }
@@ -144,6 +147,58 @@ async function generateCommitAction(context: ActionContext) {
   return message ?? "";
 }
 
+// Flow: 同步 -> 生成提交信息 -> 提交 -> 推送；无变更或无待推送内容时跳过对应步骤。
+async function syncCommitPushAction(context: ActionContext) {
+  context.setBusy(true);
+  context.setError("");
+  context.setNotice("");
+  let committed = false;
+  try {
+    context.setBusyMessage("正在同步仓库...");
+    let state = await syncRepositories();
+    applyState(context, state);
+
+    if (!state.targetStatus.isClean) {
+      context.setBusyMessage("正在生成提交信息...");
+      const message = await generateCommitMessage();
+      context.setBusyMessage("正在创建提交...");
+      state = await commitTarget(message);
+      applyState(context, state);
+      committed = true;
+    }
+
+    let pushed = false;
+    if (state.targetStatus.canPush) {
+      context.setBusyMessage("正在推送目标仓库...");
+      state = await pushTarget();
+      applyState(context, state);
+      pushed = true;
+    }
+
+    context.setNotice(oneClickNotice(committed, pushed));
+    return committed;
+  } catch (error) {
+    context.setError(error instanceof Error ? error.message : String(error));
+    return committed;
+  } finally {
+    context.setBusy(false);
+    context.setBusyMessage("");
+  }
+}
+
+function oneClickNotice(committed: boolean, pushed: boolean) {
+  if (committed && pushed) {
+    return "一键完成：已同步、提交并推送";
+  }
+  if (committed) {
+    return "已同步并提交；目标仓库未配置上游或无待推送提交，已跳过推送";
+  }
+  if (pushed) {
+    return "已同步；没有新的可提交内容，已推送已有提交";
+  }
+  return "已同步；没有可提交或推送的内容";
+}
+
 async function saveAICommitAPIKeyAction(context: ActionContext, apiKey: string) {
   return executeStateAction(context, () => setAICommitAPIKey(apiKey), {
     pendingNotice: "正在保存 DeepSeek Key...",
@@ -160,8 +215,13 @@ async function executeStateAction(
   if (!nextState) {
     return false;
   }
-  startTransition(() => context.setState(nextState));
+  applyState(context, nextState);
   return true;
+}
+
+function applyState(context: ActionContext, state: DashboardState) {
+  startTransition(() => context.setState(state));
+  context.setLastUpdatedAt(Date.now());
 }
 
 async function executeValueAction<T>(

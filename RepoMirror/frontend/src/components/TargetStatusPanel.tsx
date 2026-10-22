@@ -1,6 +1,6 @@
 import { memo, useState } from "react";
 import type { DiffSummary, TargetRepositoryStatus } from "../types";
-import { BranchIcon, CommitIcon, PushIcon, SyncIcon } from "./Icons";
+import { BranchIcon, CommitIcon, PushIcon, QuickActionIcon, SyncIcon } from "./Icons";
 import { commitHelperText, repoStateLabel } from "./ui";
 
 interface TargetStatusPanelProps {
@@ -11,6 +11,7 @@ interface TargetStatusPanelProps {
   busy: boolean;
   error: string;
   onSync: () => void;
+  onSyncCommitPush: () => Promise<boolean>;
   onCommit: (message: string) => Promise<boolean>;
   onGenerateCommit: () => Promise<string>;
   onPush: () => void;
@@ -21,6 +22,7 @@ interface TargetStatusPanelProps {
 
 export const TargetStatusPanel = memo(function TargetStatusPanel(props: TargetStatusPanelProps) {
   const [commitMessage, setCommitMessage] = useState("");
+  const [apiKeyDraft, setAPIKeyDraft] = useState("");
 
   return (
     <section className="target-panel">
@@ -28,23 +30,47 @@ export const TargetStatusPanel = memo(function TargetStatusPanel(props: TargetSt
         <span className="panel-title">目标仓库</span>
         <span className="target-slot">{props.targetSlot}</span>
       </div>
-      <TargetBody props={props} commitMessage={commitMessage} onCommitMessageChange={setCommitMessage} />
+      <TargetBody
+        props={props}
+        apiKeyDraft={apiKeyDraft}
+        commitMessage={commitMessage}
+        onAPIKeyDraftChange={setAPIKeyDraft}
+        onCommitMessageChange={setCommitMessage}
+      />
     </section>
   );
 });
 
 function TargetBody({
   props,
+  apiKeyDraft,
   commitMessage,
+  onAPIKeyDraftChange,
   onCommitMessageChange,
 }: {
   props: TargetStatusPanelProps;
+  apiKeyDraft: string;
   commitMessage: string;
+  onAPIKeyDraftChange: (value: string) => void;
   onCommitMessageChange: (value: string) => void;
 }) {
   const actionState = buildActionState(props, commitMessage);
   const handleCommit = async () => {
     const committed = await props.onCommit(commitMessage);
+    if (committed) {
+      onCommitMessageChange("");
+    }
+  };
+  const handleOneClick = async () => {
+    const trimmed = apiKeyDraft.trim();
+    if (trimmed) {
+      const saved = await props.onSaveAICommitAPIKey(trimmed);
+      if (!saved) {
+        return;
+      }
+      onAPIKeyDraftChange("");
+    }
+    const committed = await props.onSyncCommitPush();
     if (committed) {
       onCommitMessageChange("");
     }
@@ -57,19 +83,23 @@ function TargetBody({
       <SyncSummarySection summary={props.summary} />
       <CommitSection
         aiCommitConfigured={props.aiCommitConfigured}
+        apiKeyDraft={apiKeyDraft}
         busy={props.busy}
         commitMessage={commitMessage}
         generateDisabled={actionState.generateDisabled}
         helperText={actionState.helperText}
+        onAPIKeyDraftChange={onAPIKeyDraftChange}
         onGenerateCommit={props.onGenerateCommit}
         onSaveAICommitAPIKey={props.onSaveAICommitAPIKey}
         onCommitMessageChange={onCommitMessageChange}
       />
       <TargetActions
         commitDisabled={actionState.commitDisabled}
+        oneClickDisabled={actionState.oneClickDisabled}
         pushDisabled={actionState.pushDisabled}
         syncDisabled={actionState.syncDisabled}
         onCommit={handleCommit}
+        onOneClick={handleOneClick}
         onPush={props.onPush}
         onSync={props.onSync}
       />
@@ -113,25 +143,27 @@ const SyncSummarySection = memo(function SyncSummarySection({ summary }: { summa
 
 function CommitSection({
   aiCommitConfigured,
+  apiKeyDraft,
   busy,
   commitMessage,
   generateDisabled,
   helperText,
+  onAPIKeyDraftChange,
   onGenerateCommit,
   onSaveAICommitAPIKey,
   onCommitMessageChange,
 }: {
   aiCommitConfigured: boolean;
+  apiKeyDraft: string;
   busy: boolean;
   commitMessage: string;
   generateDisabled: boolean;
   helperText: string;
+  onAPIKeyDraftChange: (value: string) => void;
   onGenerateCommit: () => Promise<string>;
   onSaveAICommitAPIKey: (apiKey: string) => Promise<boolean>;
   onCommitMessageChange: (value: string) => void;
 }) {
-  const [apiKeyDraft, setAPIKeyDraft] = useState("");
-
   const handleSaveKey = async () => {
     const trimmed = apiKeyDraft.trim();
     if (!trimmed) {
@@ -139,7 +171,7 @@ function CommitSection({
     }
     const saved = await onSaveAICommitAPIKey(trimmed);
     if (saved) {
-      setAPIKeyDraft("");
+      onAPIKeyDraftChange("");
     }
   };
 
@@ -150,7 +182,7 @@ function CommitSection({
       if (!saved) {
         return;
       }
-      setAPIKeyDraft("");
+      onAPIKeyDraftChange("");
     }
     const message = await onGenerateCommit();
     if (message) {
@@ -167,7 +199,7 @@ function CommitSection({
           placeholder={aiCommitConfigured ? "已保存 DeepSeek Key，输入可覆盖" : "输入 DeepSeek API Key"}
           type="password"
           value={apiKeyDraft}
-          onChange={(event) => setAPIKeyDraft(event.target.value)}
+          onChange={(event) => onAPIKeyDraftChange(event.target.value)}
         />
         <button className="secondary-button ai-key-button" disabled={busy || !apiKeyDraft.trim()} onClick={handleSaveKey} type="button">
           保存 Key
@@ -190,26 +222,34 @@ function CommitSection({
 
 const TargetActions = memo(function TargetActions({
   commitDisabled,
+  oneClickDisabled,
   pushDisabled,
   syncDisabled,
   onCommit,
+  onOneClick,
   onPush,
   onSync,
 }: {
   commitDisabled: boolean;
+  oneClickDisabled: boolean;
   pushDisabled: boolean;
   syncDisabled: boolean;
   onCommit: () => void;
+  onOneClick: () => void;
   onPush: () => void;
   onSync: () => void;
 }) {
   return (
     <div className="target-actions">
-      <button className="sync-button" disabled={syncDisabled} onClick={onSync} type="button">
-        <SyncIcon className="button-icon" />
-        <span>同步</span>
+      <button className="sync-button" disabled={oneClickDisabled} onClick={onOneClick} type="button">
+        <QuickActionIcon className="button-icon" />
+        <span>一键同步并推送</span>
       </button>
       <div className="secondary-actions">
+        <button className="secondary-button" disabled={syncDisabled} onClick={onSync} type="button">
+          <SyncIcon className="button-icon" />
+          <span>同步</span>
+        </button>
         <button className="secondary-button" disabled={commitDisabled} onClick={onCommit} type="button">
           <CommitIcon className="button-icon" />
           <span>提交</span>
@@ -227,6 +267,7 @@ interface ActionState {
   helperText: string;
   commitDisabled: boolean;
   generateDisabled: boolean;
+  oneClickDisabled: boolean;
   pushDisabled: boolean;
   syncDisabled: boolean;
 }
@@ -239,6 +280,7 @@ function buildActionState(props: TargetStatusPanelProps, commitMessage: string):
     helperText,
     commitDisabled: props.disableActions || !hasPendingChanges || !commitMessage.trim(),
     generateDisabled: props.disableActions || !hasPendingChanges,
+    oneClickDisabled: props.disableActions || (props.status.isClean && !props.canSync && !props.status.canPush),
     pushDisabled: props.disableActions || !props.status.canPush,
     syncDisabled: props.busy || !props.canSync,
   };

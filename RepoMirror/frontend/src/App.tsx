@@ -29,6 +29,7 @@ function Dashboard(viewModel: ReturnType<typeof useRepoMirror>) {
     selectRepoWorktree,
     swap,
     sync,
+    syncCommitPush,
   } = viewModel;
   const state = viewModel.state!;
   const sourceRepo = useMemo(
@@ -72,6 +73,7 @@ function Dashboard(viewModel: ReturnType<typeof useRepoMirror>) {
             busy={busy}
             error={error}
             onSync={sync}
+            onSyncCommitPush={syncCommitPush}
             onCommit={commit}
             onGenerateCommit={generateCommit}
             onPush={push}

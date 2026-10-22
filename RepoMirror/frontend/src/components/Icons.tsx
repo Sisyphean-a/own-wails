@@ -93,6 +93,14 @@ export function SyncIcon({ className = "" }: IconProps) {
   );
 }
 
+export function QuickActionIcon({ className = "" }: IconProps) {
+  return (
+    <svg className={className} viewBox="0 0 11 11" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path d="M6.4 1.2L3.1 6.2H5.2L4.6 9.8L7.9 4.8H5.8L6.4 1.2Z" fill="currentColor" />
+    </svg>
+  );
+}
+
 export function CommitIcon({ className = "" }: IconProps) {
   return (
     <svg className={className} viewBox="0 0 11 11" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
