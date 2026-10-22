@@ -108,6 +108,7 @@ func TestBuildStateIgnoresDiffFailureWhenStatusFails(t *testing.T) {
 }
 
 type inspectorStub struct {
+	RepositoryInspector
 	resolveRepositoryRoot func(path string) (string, error)
 	readTargetStatus      func(path string) (model.TargetRepositoryStatus, error)
 	readTargetStatusRoot  func(root string) (model.TargetRepositoryStatus, error)

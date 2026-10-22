@@ -8,11 +8,16 @@ import (
 
 	"RepoMirror/internal/config"
 	"RepoMirror/internal/diff"
+	"RepoMirror/internal/gitops"
 	"RepoMirror/internal/model"
 	"RepoMirror/internal/syncer"
 )
 
 type RepositoryInspector interface {
+	ListBranches(root string) ([]model.BranchSummary, error)
+	ListCommits(root string, revision string, offset int) (model.CommitPage, error)
+	ResolveRevision(root string, revision string) (string, error)
+	ExportRevision(root string, selection model.SourceSelection) (gitops.Snapshot, error)
 	ResolveRepositoryRoot(path string) (string, error)
 	ReadTargetStatus(repoPath string) (model.TargetRepositoryStatus, error)
 	ReadTargetStatusFromRoot(root string) (model.TargetRepositoryStatus, error)
@@ -40,6 +45,7 @@ type Service struct {
 	differ          DifferenceCalculator
 	synchronizer    RepositorySynchronizer
 	config          model.AppConfig
+	sourceSelection model.SourceSelection
 }
 
 func NewService(
@@ -51,12 +57,13 @@ func NewService(
 	initialConfig model.AppConfig,
 ) *Service {
 	return &Service{
-		store:        store,
-		selector:     selector,
-		inspector:    inspector,
-		differ:       differ,
-		synchronizer: synchronizer,
-		config:       initialConfig.WithDefaults(),
+		store:           store,
+		selector:        selector,
+		inspector:       inspector,
+		differ:          differ,
+		synchronizer:    synchronizer,
+		config:          initialConfig.WithDefaults(),
+		sourceSelection: model.SourceSelection{Mode: "working"},
 	}
 }
 
@@ -107,6 +114,9 @@ func (s *Service) updateConfig(mutator func(*model.AppConfig)) (model.AppConfig,
 	next = next.WithDefaults()
 	if err := s.saveConfig(next); err != nil {
 		return model.AppConfig{}, err
+	}
+	if next.ProjectA != s.config.ProjectA || next.ProjectB != s.config.ProjectB || next.Direction != s.config.Direction {
+		s.sourceSelection = model.SourceSelection{Mode: "working"}
 	}
 	s.config = next
 	return s.config, nil

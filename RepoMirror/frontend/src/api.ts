@@ -1,4 +1,4 @@
-import type { DashboardState, Direction, RepositorySlot } from "./types";
+import type { BranchSummary, CommitPage, DashboardState, Direction, RepositorySlot, SourceMode } from "./types";
 
 function backend() {
   return window.go.main.App;
@@ -18,6 +18,18 @@ export function selectRepository(slot: RepositorySlot): Promise<DashboardState> 
 
 export function selectRepositoryWorktree(slot: RepositorySlot, path: string): Promise<DashboardState> {
   return backend().SelectRepositoryWorktree(slot, path);
+}
+
+export function listSourceBranches(): Promise<BranchSummary[]> {
+  return backend().ListSourceBranches();
+}
+
+export function listSourceCommits(revision: string, offset: number): Promise<CommitPage> {
+  return backend().ListSourceCommits(revision, offset);
+}
+
+export function selectSource(mode: SourceMode, revision: string): Promise<DashboardState> {
+  return backend().SelectSource(mode, revision);
 }
 
 export function swapRepositories(): Promise<DashboardState> {

@@ -10,6 +10,14 @@ export function GenerateCommitMessage() {
   return window['go']['main']['App']['GenerateCommitMessage']();
 }
 
+export function ListSourceBranches() {
+  return window['go']['main']['App']['ListSourceBranches']();
+}
+
+export function ListSourceCommits(arg1, arg2) {
+  return window['go']['main']['App']['ListSourceCommits'](arg1, arg2);
+}
+
 export function LoadState() {
   return window['go']['main']['App']['LoadState']();
 }
@@ -32,6 +40,10 @@ export function SelectRepository(arg1) {
 
 export function SelectRepositoryWorktree(arg1, arg2) {
   return window['go']['main']['App']['SelectRepositoryWorktree'](arg1, arg2);
+}
+
+export function SelectSource(arg1, arg2) {
+  return window['go']['main']['App']['SelectSource'](arg1, arg2);
 }
 
 export function SetAICommitAPIKey(arg1) {

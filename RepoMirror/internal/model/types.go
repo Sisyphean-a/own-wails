@@ -184,7 +184,31 @@ func BuildDiffSummary(entries []DiffEntry) DiffSummary {
 	return summary
 }
 
+type SourceSelection struct {
+	Mode   string `json:"mode"`
+	Ref    string `json:"ref"`
+	Commit string `json:"commit"`
+}
+
+type BranchSummary struct {
+	Ref  string `json:"ref"`
+	Name string `json:"name"`
+}
+
+type CommitSummary struct {
+	Hash    string `json:"hash"`
+	Subject string `json:"subject"`
+	Author  string `json:"author"`
+	Date    string `json:"date"`
+}
+
+type CommitPage struct {
+	Commits []CommitSummary `json:"commits"`
+	HasMore bool            `json:"hasMore"`
+}
+
 type DashboardState struct {
+	SourceSelection    SourceSelection        `json:"sourceSelection"`
 	Config             AppConfig              `json:"config"`
 	AICommitConfigured bool                   `json:"aiCommitConfigured"`
 	RepositoryA        RepositorySummary      `json:"repositoryA"`

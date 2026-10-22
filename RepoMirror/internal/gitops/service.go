@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"io"
 	"os/exec"
 	"path/filepath"
 	"sort"
@@ -16,6 +17,7 @@ import (
 
 type Runner interface {
 	Run(repoPath string, input []byte, args ...string) ([]byte, error)
+	RunTo(repoPath string, input []byte, output io.Writer, args ...string) error
 }
 
 type Service struct {
@@ -349,6 +351,19 @@ func (execRunner) Run(repoPath string, input []byte, args ...string) ([]byte, er
 		return output, fmt.Errorf("%w: %s", err, strings.TrimSpace(string(output)))
 	}
 	return output, nil
+}
+
+func (execRunner) RunTo(repoPath string, input []byte, output io.Writer, args ...string) error {
+	cmd := exec.Command("git", append([]string{"-C", repoPath}, args...)...)
+	cmd.Stdin = bytes.NewReader(input)
+	cmd.Stdout = output
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+	hideConsoleWindow(cmd)
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("%w: %s", err, strings.TrimSpace(stderr.String()))
+	}
+	return nil
 }
 
 func trimTrailingCarriageReturn(line []byte) []byte {

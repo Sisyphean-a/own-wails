@@ -6,6 +6,10 @@ export function CommitTarget(arg1:string):Promise<model.DashboardState>;
 
 export function GenerateCommitMessage():Promise<string>;
 
+export function ListSourceBranches():Promise<Array<model.BranchSummary>>;
+
+export function ListSourceCommits(arg1:string,arg2:number):Promise<model.CommitPage>;
+
 export function LoadState():Promise<model.DashboardState>;
 
 export function PushTarget():Promise<model.DashboardState>;
@@ -17,6 +21,8 @@ export function SaveConfig():Promise<model.DashboardState>;
 export function SelectRepository(arg1:string):Promise<model.DashboardState>;
 
 export function SelectRepositoryWorktree(arg1:string,arg2:string):Promise<model.DashboardState>;
+
+export function SelectSource(arg1:string,arg2:string):Promise<model.DashboardState>;
 
 export function SetAICommitAPIKey(arg1:string):Promise<model.DashboardState>;
 

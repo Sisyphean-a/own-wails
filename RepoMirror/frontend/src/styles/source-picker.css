@@ -1,0 +1,280 @@
+.source-toolbar {
+  min-height: 44px;
+  padding: 6px 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid var(--border-main);
+  background: var(--panel-top);
+  color: var(--text-dim);
+  font: 500 12px/18px var(--font-sans);
+}
+
+.source-mode,
+.source-revision {
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.source-mode select,
+.source-field select,
+.source-field input {
+  min-width: 0;
+  height: 30px;
+  padding: 0 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: 5px;
+  background: var(--panel-shell);
+  color: var(--text-main);
+  font: 500 12px/18px var(--font-mono);
+  color-scheme: dark;
+}
+
+.source-revision {
+  flex: 0 1 auto;
+  overflow: hidden;
+  font-family: var(--font-mono);
+}
+
+.source-revision > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.source-revision code {
+  color: var(--text-main);
+  font: inherit;
+}
+
+.source-context,
+.source-scope {
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.source-scope {
+  margin-left: auto;
+}
+
+.source-change,
+.source-load-more {
+  border: 0;
+  background: transparent;
+  color: var(--text-dim);
+  font: 500 12px/18px var(--font-sans);
+  cursor: pointer;
+}
+
+.source-change:hover,
+.source-load-more:hover {
+  color: var(--text-main);
+}
+
+.source-dialog {
+  width: min(650px, calc(100vw - 48px));
+  max-height: calc(100vh - 64px);
+  padding: 0;
+  border: 1px solid var(--border-strong);
+  border-radius: 9px;
+  background: var(--panel-main);
+  color: var(--text-main);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
+  font: 500 12px/18px var(--font-sans);
+}
+
+.source-dialog::backdrop {
+  background: rgba(4, 8, 12, 0.72);
+}
+
+.source-dialog form {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 68px);
+}
+
+.source-dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-main);
+  background: var(--panel-alt);
+}
+
+.source-dialog-header h2 {
+  margin: 0 0 4px;
+  font: 600 15px/22px var(--font-sans);
+}
+
+.source-dialog-header span {
+  color: var(--text-muted);
+}
+
+.source-dialog-controls {
+  display: flex;
+  gap: 12px;
+  padding: 16px 20px;
+}
+
+.source-field {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: var(--text-dim);
+}
+
+.source-hash-field {
+  flex: 1.6;
+}
+
+.source-history {
+  min-height: 140px;
+  max-height: 330px;
+  margin: 0 20px;
+  overflow-y: auto;
+  border: 1px solid var(--border-main);
+  border-radius: 5px;
+  background: var(--panel-shell);
+}
+
+.source-history.branch-preview {
+  min-height: 72px;
+}
+
+.source-commit {
+  width: 100%;
+  padding: 11px 13px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border: 0;
+  border-bottom: 1px solid var(--border-soft);
+  border-left: 2px solid transparent;
+  background: transparent;
+  color: var(--text-main);
+  text-align: left;
+  cursor: pointer;
+}
+
+.source-commit:hover:not(:disabled) {
+  background: var(--panel-sub);
+}
+
+.source-commit.selected {
+  border-left-color: var(--text-success);
+  background: rgba(57, 217, 138, 0.07);
+}
+
+.source-commit.selected .source-commit-subject::before {
+  content: "✓ ";
+  color: var(--text-success);
+}
+
+.source-commit-subject {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: 500 13px/18px var(--font-sans);
+}
+
+.source-commit-meta {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  color: var(--text-muted);
+  font: 400 11px/16px var(--font-mono);
+}
+
+.source-commit-meta time {
+  margin-left: auto;
+}
+
+.source-commit-meta code {
+  color: var(--text-dim);
+  font: inherit;
+}
+
+.source-load-more {
+  width: 100%;
+  min-height: 36px;
+}
+
+.source-empty {
+  min-height: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  color: var(--text-muted);
+}
+
+.source-selection-status {
+  padding: 12px 20px 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-dim);
+}
+
+.source-risk {
+  margin: 8px 20px 16px;
+  color: var(--text-dim);
+  font-size: 11px;
+  line-height: 18px;
+}
+
+.source-error {
+  display: flex;
+  gap: 10px;
+  padding: 0 20px 12px;
+  overflow-wrap: anywhere;
+  color: var(--text-deleted);
+}
+
+.source-dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 12px 20px;
+  border-top: 1px solid var(--border-main);
+  background: var(--panel-alt);
+}
+
+.source-dialog-footer .secondary-button {
+  flex: 0 0 auto;
+  width: auto;
+  min-width: 72px;
+  padding: 0 16px;
+  justify-content: center;
+}
+
+.source-dialog-footer .sync-button {
+  width: auto;
+  min-width: 130px;
+  justify-content: center;
+}
+
+.source-toolbar :focus-visible,
+.source-dialog :focus-visible {
+  outline: 2px solid var(--text-success);
+  outline-offset: 2px;
+}
+
+.source-mode select:disabled,
+.source-field select:disabled,
+.source-field input:disabled,
+.source-change:disabled,
+.source-load-more:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.branch-preview .source-commit:disabled {
+  cursor: default;
+}

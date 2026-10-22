@@ -2,6 +2,7 @@ import { useCallback, useMemo } from "react";
 import { AppHeader } from "./components/AppHeader";
 import { AppStatusBar } from "./components/AppStatusBar";
 import { DiffPanel } from "./components/DiffPanel";
+import { SourcePicker } from "./components/SourcePicker";
 import { TargetStatusPanel } from "./components/TargetStatusPanel";
 import "./App.css";
 import { useRepoMirror } from "./useRepoMirror";
@@ -16,6 +17,7 @@ function Dashboard(viewModel: ReturnType<typeof useRepoMirror>) {
     busy,
     busyMessage,
     changeDirection,
+    changeSource,
     commit,
     error,
     generateCommit,
@@ -64,7 +66,16 @@ function Dashboard(viewModel: ReturnType<typeof useRepoMirror>) {
         />
 
         <main className="workspace">
-          <DiffPanel summary={state.summary} entries={state.differences} />
+          <DiffPanel summary={state.summary} entries={state.differences}>
+            <SourcePicker
+              key={state.sourceSlot + sourceRepo.path}
+              selection={state.sourceSelection}
+              repository={sourceRepo}
+              busy={busy}
+              error={error}
+              onSelect={changeSource}
+            />
+          </DiffPanel>
           <TargetStatusPanel
             status={state.targetStatus}
             summary={state.summary}

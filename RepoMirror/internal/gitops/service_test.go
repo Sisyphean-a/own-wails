@@ -2,6 +2,7 @@ package gitops
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -571,6 +572,15 @@ type runnerStub struct {
 	mu        sync.Mutex
 	calls     []string
 	responses map[string][]byte
+}
+
+func (stub *runnerStub) RunTo(root string, input []byte, output io.Writer, args ...string) error {
+	data, err := stub.Run(root, input, args...)
+	if err != nil {
+		return err
+	}
+	_, err = output.Write(data)
+	return err
 }
 
 func (stub *runnerStub) Run(_ string, _ []byte, args ...string) ([]byte, error) {

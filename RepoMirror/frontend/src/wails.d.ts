@@ -1,10 +1,13 @@
-import type { DashboardState, Direction, RepositorySlot } from "./types";
+import type { BranchSummary, CommitPage, DashboardState, Direction, RepositorySlot, SourceMode } from "./types";
 
 interface RepoMirrorBackend {
   LoadState(): Promise<DashboardState>;
   Refresh(): Promise<DashboardState>;
   SelectRepository(slot: RepositorySlot): Promise<DashboardState>;
   SelectRepositoryWorktree(slot: RepositorySlot, path: string): Promise<DashboardState>;
+  ListSourceBranches(): Promise<BranchSummary[]>;
+  ListSourceCommits(revision: string, offset: number): Promise<CommitPage>;
+  SelectSource(mode: SourceMode, revision: string): Promise<DashboardState>;
   SwapRepositories(): Promise<DashboardState>;
   SetDirection(direction: Direction): Promise<DashboardState>;
   SaveConfig(): Promise<DashboardState>;

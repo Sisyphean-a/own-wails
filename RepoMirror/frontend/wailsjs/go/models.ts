@@ -22,6 +22,71 @@ export namespace model {
 	        this.aiCommitApiKey = source["aiCommitApiKey"];
 	    }
 	}
+	export class BranchSummary {
+	    ref: string;
+	    name: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new BranchSummary(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.ref = source["ref"];
+	        this.name = source["name"];
+	    }
+	}
+	export class CommitSummary {
+	    hash: string;
+	    subject: string;
+	    author: string;
+	    date: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new CommitSummary(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.hash = source["hash"];
+	        this.subject = source["subject"];
+	        this.author = source["author"];
+	        this.date = source["date"];
+	    }
+	}
+	export class CommitPage {
+	    commits: CommitSummary[];
+	    hasMore: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new CommitPage(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.commits = this.convertValues(source["commits"], CommitSummary);
+	        this.hasMore = source["hasMore"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	
 	export class TargetRepositoryStatus {
 	    path: string;
 	    name: string;
@@ -154,7 +219,24 @@ export namespace model {
 		    return a;
 		}
 	}
+	export class SourceSelection {
+	    mode: string;
+	    ref: string;
+	    commit: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new SourceSelection(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.mode = source["mode"];
+	        this.ref = source["ref"];
+	        this.commit = source["commit"];
+	    }
+	}
 	export class DashboardState {
+	    sourceSelection: SourceSelection;
 	    config: AppConfig;
 	    aiCommitConfigured: boolean;
 	    repositoryA: RepositorySummary;
@@ -172,6 +254,7 @@ export namespace model {
 	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.sourceSelection = this.convertValues(source["sourceSelection"], SourceSelection);
 	        this.config = this.convertValues(source["config"], AppConfig);
 	        this.aiCommitConfigured = source["aiCommitConfigured"];
 	        this.repositoryA = this.convertValues(source["repositoryA"], RepositorySummary);
@@ -202,6 +285,7 @@ export namespace model {
 		    return a;
 		}
 	}
+	
 	
 	
 	

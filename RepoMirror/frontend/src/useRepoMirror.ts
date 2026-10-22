@@ -8,12 +8,13 @@ import {
   saveConfig,
   selectRepository,
   selectRepositoryWorktree,
+  selectSource,
   setAICommitAPIKey,
   setDirection,
   swapRepositories,
   syncRepositories,
 } from "./api";
-import type { DashboardState, Direction, RepositorySlot } from "./types";
+import type { DashboardState, Direction, RepositorySlot, SourceMode } from "./types";
 
 interface ViewModel {
   busy: boolean;
@@ -22,6 +23,7 @@ interface ViewModel {
   lastUpdatedAt: number;
   notice: string;
   state: DashboardState | null;
+  changeSource: (mode: SourceMode, revision: string) => Promise<boolean>;
   selectRepo: (slot: RepositorySlot) => Promise<void>;
   selectRepoWorktree: (slot: RepositorySlot, path: string) => Promise<void>;
   swap: () => Promise<void>;
@@ -99,6 +101,8 @@ function setters(
 
 function actionFactory(context: ActionContext) {
   return {
+    changeSource: (mode: SourceMode, revision: string) =>
+      executeStateAction(context, () => selectSource(mode, revision), { pendingNotice: "正在计算所选版本差异..." }),
     selectRepo: async (slot: RepositorySlot) => {
       await executeStateAction(context, () => selectRepository(slot), { pendingNotice: `正在选择仓库 ${slot}...` });
     },

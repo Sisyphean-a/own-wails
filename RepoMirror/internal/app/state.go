@@ -28,6 +28,7 @@ func (s *Service) buildState(cfg model.AppConfig) (model.DashboardState, error) 
 	state := model.DashboardState{
 		Config:             cfg.Sanitized(),
 		AICommitConfigured: hasAICommitAPIKey(cfg),
+		SourceSelection:    s.currentSourceSelection(),
 		RepositoryA:        repositoryA.summary,
 		RepositoryB:        repositoryB.summary,
 		SourceSlot:         sourceSlot,
@@ -161,7 +162,7 @@ func (s *Service) runStateTasks(
 	case statusTasks == 0 && !shouldDiff:
 		return diff.Result{}, nil
 	case statusTasks == 0:
-		return s.differ.Calculate(request)
+		return s.calculateSourceDiff(request)
 	case statusTasks == 1 && !shouldDiff:
 		s.enrichRepositoryStatus(activeStatusProbe(repositoryA, repositoryB))
 		return diff.Result{}, nil
@@ -169,7 +170,7 @@ func (s *Service) runStateTasks(
 		var waitGroup sync.WaitGroup
 		waitGroup.Add(1)
 		go s.enrichRepositoryStatusInto(activeStatusProbe(repositoryA, repositoryB), &waitGroup)
-		result, diffErr := s.differ.Calculate(request)
+		result, diffErr := s.calculateSourceDiff(request)
 		waitGroup.Wait()
 		return result, diffErr
 	case !shouldDiff:
@@ -188,7 +189,7 @@ func (s *Service) runStateTasks(
 	waitGroup.Add(2)
 	go s.enrichRepositoryStatusInto(repositoryA, &waitGroup)
 	go s.enrichRepositoryStatusInto(repositoryB, &waitGroup)
-	result, diffErr = s.differ.Calculate(request)
+	result, diffErr = s.calculateSourceDiff(request)
 	waitGroup.Wait()
 	return result, diffErr
 }

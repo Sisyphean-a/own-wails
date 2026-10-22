@@ -58,7 +58,33 @@ export interface DiffSummary {
   deleted: number;
 }
 
+export type SourceMode = "working" | "branch" | "commit";
+
+export interface SourceSelection {
+  mode: SourceMode;
+  ref: string;
+  commit: string;
+}
+
+export interface BranchSummary {
+  ref: string;
+  name: string;
+}
+
+export interface CommitSummary {
+  hash: string;
+  subject: string;
+  author: string;
+  date: string;
+}
+
+export interface CommitPage {
+  commits: CommitSummary[];
+  hasMore: boolean;
+}
+
 export interface DashboardState {
+  sourceSelection: SourceSelection;
   config: AppConfig;
   aiCommitConfigured: boolean;
   repositoryA: RepositorySummary;

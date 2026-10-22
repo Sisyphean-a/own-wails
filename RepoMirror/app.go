@@ -39,6 +39,18 @@ func (a *App) SelectRepositoryWorktree(slot string, path string) (model.Dashboar
 	return a.service.SelectRepositoryWorktree(slot, path)
 }
 
+func (a *App) ListSourceBranches() ([]model.BranchSummary, error) {
+	return a.service.ListSourceBranches()
+}
+
+func (a *App) ListSourceCommits(revision string, offset int) (model.CommitPage, error) {
+	return a.service.ListSourceCommits(revision, offset)
+}
+
+func (a *App) SelectSource(mode string, revision string) (model.DashboardState, error) {
+	return a.service.SelectSource(mode, revision)
+}
+
 func (a *App) SwapRepositories() (model.DashboardState, error) {
 	return a.service.SwapRepositories()
 }

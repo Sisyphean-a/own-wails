@@ -2,6 +2,8 @@ package diff
 
 import (
 	"runtime"
+	"slices"
+	"sort"
 	"sync"
 
 	"RepoMirror/internal/model"
@@ -21,6 +23,10 @@ type Service struct {
 type Request struct {
 	SourceRoot string
 	TargetRoot string
+	// Rule: nil 表示工作目录；非 nil 表示已导出的版本文件。
+	SourceFiles []string
+	// Rule: 非 nil 时只比较这些路径，范围外的目标文件保持不变。
+	ScopePaths []string
 }
 
 type Result struct {
@@ -42,9 +48,20 @@ func (s *Service) Calculate(request Request) (Result, error) {
 	if err != nil {
 		return Result{}, err
 	}
-	ignored, err := s.git.IgnoredPathSetFromRootSorted(request.TargetRoot, sourceFiles)
+	ignoreCandidates := sourceFiles
+	if request.SourceFiles != nil {
+		ignoreCandidates = append(append([]string{}, sourceFiles...), targetFiles...)
+		sort.Strings(ignoreCandidates)
+		ignoreCandidates = slices.Compact(ignoreCandidates)
+	}
+	ignored, err := s.git.IgnoredPathSetFromRootSorted(request.TargetRoot, ignoreCandidates)
 	if err != nil {
 		return Result{}, err
+	}
+	if request.SourceFiles != nil {
+		if err := validateRevisionTargets(request.TargetRoot, ignoreCandidates, ignored); err != nil {
+			return Result{}, err
+		}
 	}
 	entries, summary, err := s.collectEntries(request, sourceFiles, targetFiles, ignored)
 	if err != nil {
@@ -54,6 +71,19 @@ func (s *Service) Calculate(request Request) (Result, error) {
 }
 
 func (s *Service) loadFiles(request Request) ([]string, []string, error) {
+	if request.SourceFiles != nil {
+		targetFiles, err := s.git.ListSyncableSourcePathsFromRoot(request.TargetRoot)
+		if err != nil {
+			return nil, nil, err
+		}
+		if request.ScopePaths != nil {
+			targetFiles = slices.DeleteFunc(targetFiles, func(path string) bool {
+				_, exists := slices.BinarySearch(request.ScopePaths, path)
+				return !exists
+			})
+		}
+		return request.SourceFiles, targetFiles, nil
+	}
 	var waitGroup sync.WaitGroup
 	var sourceFiles []string
 	var targetFiles []string

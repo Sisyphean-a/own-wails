@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"RepoMirror/internal/model"
-	"RepoMirror/internal/syncer"
 )
 
 func (s *Service) SelectRepository(slot string) (model.DashboardState, error) {
@@ -65,7 +64,7 @@ func (s *Service) SyncRepositories() (model.DashboardState, error) {
 	if err != nil {
 		return model.DashboardState{}, err
 	}
-	if err := s.synchronizer.Sync(syncer.Request{SourceRoot: sourceRoot, TargetRoot: targetRoot}); err != nil {
+	if err := s.syncSource(sourceRoot, targetRoot); err != nil {
 		return model.DashboardState{}, err
 	}
 	return s.buildState(s.currentConfig())

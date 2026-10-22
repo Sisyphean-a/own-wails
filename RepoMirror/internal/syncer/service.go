@@ -19,10 +19,7 @@ type Service struct {
 	differ DifferencePlanner
 }
 
-type Request struct {
-	SourceRoot string
-	TargetRoot string
-}
+type Request diff.Request
 
 func NewService(fsys platform.FileSystem, differ DifferencePlanner) *Service {
 	return &Service{fs: fsys, differ: differ}

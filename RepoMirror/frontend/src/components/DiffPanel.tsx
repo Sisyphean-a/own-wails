@@ -1,4 +1,4 @@
-import { memo, useDeferredValue, useEffect, useMemo, useRef, useState, type UIEvent } from "react";
+import { memo, useDeferredValue, useEffect, useMemo, useRef, useState, type UIEvent, type ReactNode } from "react";
 import type { DiffEntry, DiffFilter, DiffSummary } from "../types";
 import { diffKindCode, diffKindLabel } from "../types";
 import { SearchIcon } from "./Icons";
@@ -23,6 +23,7 @@ interface ViewportMetrics {
 interface DiffPanelProps {
   summary: DiffSummary;
   entries: DiffEntry[];
+  children?: ReactNode;
 }
 
 export const DiffPanel = memo(function DiffPanel(props: DiffPanelProps) {
@@ -40,6 +41,7 @@ export const DiffPanel = memo(function DiffPanel(props: DiffPanelProps) {
 
   return (
     <section className="diff-panel">
+      {props.children}
       <DiffPanelTopbar
         totalVisible={visibleEntries.length}
         total={props.summary.total}
