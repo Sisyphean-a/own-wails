@@ -54,7 +54,7 @@ func TestCompactSortedPaths(t *testing.T) {
 }
 
 func TestParseIgnoredPaths(t *testing.T) {
-	ignored := parseIgnoredPaths([]byte(".gitignore:1:ignored/\tignored/a.txt\n.env:2:*.env\tprod.env\n"))
+	ignored := parseIgnoredPaths([]byte(".gitignore\x001\x00ignored/\x00ignored/a.txt\x00.env\x002\x00*.env\x00prod.env\x00"))
 	expected := map[string]string{
 		"ignored/a.txt": "ignore-protected",
 		"prod.env":      "env-protected",
@@ -64,8 +64,18 @@ func TestParseIgnoredPaths(t *testing.T) {
 	}
 }
 
+func TestParseIgnoredPathsKeepsNonASCIIPaths(t *testing.T) {
+	ignored := parseIgnoredPaths([]byte(".gitignore\x003\x00/docs/\x00docs/需求/强制放款需求.md\x00"))
+	expected := map[string]string{
+		"docs/需求/强制放款需求.md": "ignore-protected",
+	}
+	if !reflect.DeepEqual(ignored, expected) {
+		t.Fatalf("unexpected ignored paths: got %v want %v", ignored, expected)
+	}
+}
+
 func TestParseIgnoredPathSet(t *testing.T) {
-	ignored := parseIgnoredPathSet([]byte("ignored/a.txt\nprod.env\n"))
+	ignored := parseIgnoredPathSet([]byte("ignored/a.txt\x00prod.env\x00"))
 	expected := map[string]struct{}{
 		"ignored/a.txt": {},
 		"prod.env":      {},
@@ -75,11 +85,12 @@ func TestParseIgnoredPathSet(t *testing.T) {
 	}
 }
 
-func TestParseIgnoredPathSetPreservesSpacesAndCRLF(t *testing.T) {
-	ignored := parseIgnoredPathSet([]byte(" spaced name.txt \r\nnested\\path.txt\r\n"))
+func TestParseIgnoredPathSetPreservesSpacesAndKeepsNonASCII(t *testing.T) {
+	ignored := parseIgnoredPathSet([]byte(" spaced name.txt \x00nested\\path.txt\x00docs/需求/新增还款订单.md\x00"))
 	expected := map[string]struct{}{
 		" spaced name.txt ": {},
 		"nested/path.txt":   {},
+		"docs/需求/新增还款订单.md": {},
 	}
 	if !reflect.DeepEqual(ignored, expected) {
 		t.Fatalf("unexpected ignored path set: got %v want %v", ignored, expected)

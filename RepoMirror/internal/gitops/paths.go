@@ -174,11 +174,6 @@ func normalizeSlashPathRaw(raw []byte) string {
 	return string(normalized)
 }
 
-func normalizeSlashPath(raw []byte) string {
-	trimmed := bytes.TrimSpace(raw)
-	return normalizeSlashPathRaw(trimmed)
-}
-
 func bytesToStringView(raw []byte) string {
 	// Safe here because returned strings are immutable views over the runner output,
 	// which remains heap-backed and alive as long as the strings are retained.

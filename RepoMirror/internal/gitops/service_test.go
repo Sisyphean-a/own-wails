@@ -54,7 +54,7 @@ func TestIgnoredPathsReturnsRuleLabels(t *testing.T) {
 func TestIgnoredPathSetFromRootReturnsMatchingPaths(t *testing.T) {
 	runner := &runnerStub{
 		responses: map[string][]byte{
-			"check-ignore --stdin --no-index": []byte("ignored/a.txt\nprod.env\n"),
+			"check-ignore --stdin --no-index -z": []byte("ignored/a.txt\x00prod.env\x00"),
 		},
 	}
 
@@ -75,7 +75,7 @@ func TestIgnoredPathSetFromRootReturnsMatchingPaths(t *testing.T) {
 func TestIgnoredPathSetFromRootSortedReturnsMatchingPaths(t *testing.T) {
 	runner := &runnerStub{
 		responses: map[string][]byte{
-			"check-ignore --stdin --no-index": []byte("ignored/a.txt\nprod.env\n"),
+			"check-ignore --stdin --no-index -z": []byte("ignored/a.txt\x00prod.env\x00"),
 		},
 	}
 
@@ -90,6 +90,31 @@ func TestIgnoredPathSetFromRootSortedReturnsMatchingPaths(t *testing.T) {
 	}
 	if !reflect.DeepEqual(ignored, expected) {
 		t.Fatalf("unexpected ignored sorted path set: got %v want %v", ignored, expected)
+	}
+}
+
+func TestIgnoredPathSetFromRootMatchesNonASCIIPaths(t *testing.T) {
+	repo := t.TempDir()
+	testutil.InitRepo(t, repo)
+	testutil.WriteFile(t, repo, ".gitignore", "/docs/\n")
+	testutil.CommitAll(t, repo, "init")
+
+	service := NewService(NewExecRunner())
+	ignored, err := service.IgnoredPathSetFromRootSorted(repo, []string{
+		"docs/需求/18-24-26-强制放款需求.md",
+		"docs/需求/新增还款订单.md",
+		"keep.md",
+	})
+	if err != nil {
+		t.Fatalf("ignored path set failed: %v", err)
+	}
+
+	expected := map[string]struct{}{
+		"docs/需求/18-24-26-强制放款需求.md": {},
+		"docs/需求/新增还款订单.md":          {},
+	}
+	if !reflect.DeepEqual(ignored, expected) {
+		t.Fatalf("unexpected ignored path set: got %v want %v", ignored, expected)
 	}
 }
 
@@ -228,32 +253,32 @@ func TestReadTargetStatusCachesResolvedRoot(t *testing.T) {
 	}
 }
 
-func TestBuildLineSeparatedInputDeduplicatesAcrossPathGroups(t *testing.T) {
-	input := buildLineSeparatedInput(nil,
+func TestBuildCheckIgnoreInputDeduplicatesAcrossPathGroups(t *testing.T) {
+	input := buildCheckIgnoreInput(nil,
 		[]string{"a.txt", "shared.txt", ""},
 		[]string{"shared.txt", "b.txt"},
 		[]string{"a.txt", "c.txt"},
 	)
 
-	expected := "a.txt\nshared.txt\nb.txt\nc.txt\n"
+	expected := "a.txt\x00shared.txt\x00b.txt\x00c.txt\x00"
 	if string(input) != expected {
-		t.Fatalf("unexpected line-separated input: got %q want %q", input, expected)
+		t.Fatalf("unexpected check-ignore input: got %q want %q", input, expected)
 	}
 }
 
-func TestBuildLineSeparatedInputDeduplicatesWithinSingleGroup(t *testing.T) {
-	input := buildLineSeparatedInput(nil, []string{"a.txt", "a.txt", "b.txt", "", "b.txt"})
+func TestBuildCheckIgnoreInputDeduplicatesWithinSingleGroup(t *testing.T) {
+	input := buildCheckIgnoreInput(nil, []string{"a.txt", "a.txt", "b.txt", "", "b.txt"})
 
-	expected := "a.txt\nb.txt\n"
+	expected := "a.txt\x00b.txt\x00"
 	if string(input) != expected {
 		t.Fatalf("unexpected single-group input: got %q want %q", input, expected)
 	}
 }
 
-func TestBuildLineSeparatedInputKeepsOrderedUniqueSingleGroup(t *testing.T) {
-	input := buildLineSeparatedInput(nil, []string{"a.txt", "b.txt", "c.txt"})
+func TestBuildCheckIgnoreInputKeepsOrderedUniqueSingleGroup(t *testing.T) {
+	input := buildCheckIgnoreInput(nil, []string{"a.txt", "b.txt", "c.txt"})
 
-	expected := "a.txt\nb.txt\nc.txt\n"
+	expected := "a.txt\x00b.txt\x00c.txt\x00"
 	if string(input) != expected {
 		t.Fatalf("unexpected ordered input: got %q want %q", input, expected)
 	}
@@ -361,7 +386,7 @@ func BenchmarkListSyncableSourcePathsFromRoot(b *testing.B) {
 	}
 }
 
-func BenchmarkBuildLineSeparatedInput(b *testing.B) {
+func BenchmarkBuildCheckIgnoreInput(b *testing.B) {
 	groupA := make([]string, 0, 4000)
 	groupB := make([]string, 0, 4000)
 	for index := 0; index < 4000; index++ {
@@ -375,9 +400,9 @@ func BenchmarkBuildLineSeparatedInput(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 	for iteration := 0; iteration < b.N; iteration++ {
-		input := buildLineSeparatedInput(nil, groupA, groupB)
+		input := buildCheckIgnoreInput(nil, groupA, groupB)
 		if len(input) == 0 {
-			b.Fatal("expected line-separated input")
+			b.Fatal("expected check-ignore input")
 		}
 	}
 }
@@ -389,15 +414,20 @@ func BenchmarkIgnoredPathsFromRoot(b *testing.B) {
 		path := fmt.Sprintf("dir/file-%04d.txt", index)
 		paths = append(paths, path)
 		if index%5 == 0 {
-			output.WriteString(".gitignore:1:ignored/\t")
+			output.WriteString(".gitignore")
+			output.WriteByte(0)
+			output.WriteString("1")
+			output.WriteByte(0)
+			output.WriteString("ignored/")
+			output.WriteByte(0)
 			output.WriteString(path)
-			output.WriteByte('\n')
+			output.WriteByte(0)
 		}
 	}
 
 	runner := &runnerStub{
 		responses: map[string][]byte{
-			"check-ignore -v --stdin --no-index": []byte(output.String()),
+			"check-ignore -v --stdin --no-index -z": []byte(output.String()),
 		},
 	}
 	service := NewService(runner)
@@ -423,13 +453,13 @@ func BenchmarkIgnoredPathSetFromRoot(b *testing.B) {
 		paths = append(paths, path)
 		if index%5 == 0 {
 			output.WriteString(path)
-			output.WriteByte('\n')
+			output.WriteByte(0)
 		}
 	}
 
 	runner := &runnerStub{
 		responses: map[string][]byte{
-			"check-ignore --stdin --no-index": []byte(output.String()),
+			"check-ignore --stdin --no-index -z": []byte(output.String()),
 		},
 	}
 	service := NewService(runner)
@@ -455,13 +485,13 @@ func BenchmarkIgnoredPathSetFromRootSorted(b *testing.B) {
 		paths = append(paths, path)
 		if index%5 == 0 {
 			output.WriteString(path)
-			output.WriteByte('\n')
+			output.WriteByte(0)
 		}
 	}
 
 	runner := &runnerStub{
 		responses: map[string][]byte{
-			"check-ignore --stdin --no-index": []byte(output.String()),
+			"check-ignore --stdin --no-index -z": []byte(output.String()),
 		},
 	}
 	service := NewService(runner)

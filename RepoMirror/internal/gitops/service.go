@@ -30,6 +30,9 @@ var inputBufferPool = sync.Pool{
 	},
 }
 
+// Rule: check-ignore 统一按 -z 协议收发，输入输出都以 NUL 分隔。
+const checkIgnoreSeparator byte = 0
+
 func NewService(runner Runner) *Service {
 	return &Service{runner: runner, roots: make(map[string]string)}
 }
@@ -89,7 +92,7 @@ func (s *Service) IgnoredPaths(repoPath string, paths []string) (map[string]stri
 
 func (s *Service) IgnoredPathSetFromRoot(root string, pathGroups ...[]string) (map[string]struct{}, error) {
 	input := borrowInputBuffer()
-	input = buildLineSeparatedInput(input, pathGroups...)
+	input = buildCheckIgnoreInput(input, pathGroups...)
 	defer releaseInputBuffer(input)
 	return s.ignoredPathSetFromInput(root, input)
 }
@@ -105,7 +108,7 @@ func (s *Service) ignoredPathSetFromInput(root string, input []byte) (map[string
 	if len(input) == 0 {
 		return nil, nil
 	}
-	output, err := s.runner.Run(root, input, "check-ignore", "--stdin", "--no-index")
+	output, err := s.runner.Run(root, input, "check-ignore", "--stdin", "--no-index", "-z")
 	if err != nil {
 		var exitErr *exec.ExitError
 		if errors.As(err, &exitErr) && exitErr.ExitCode() == 1 {
@@ -118,12 +121,12 @@ func (s *Service) ignoredPathSetFromInput(root string, input []byte) (map[string
 
 func (s *Service) IgnoredPathsFromRoot(root string, pathGroups ...[]string) (map[string]string, error) {
 	input := borrowInputBuffer()
-	input = buildLineSeparatedInput(input, pathGroups...)
+	input = buildCheckIgnoreInput(input, pathGroups...)
 	defer releaseInputBuffer(input)
 	if len(input) == 0 {
 		return nil, nil
 	}
-	output, err := s.runner.Run(root, input, "check-ignore", "-v", "--stdin", "--no-index")
+	output, err := s.runner.Run(root, input, "check-ignore", "-v", "--stdin", "--no-index", "-z")
 	if err != nil {
 		var exitErr *exec.ExitError
 		if errors.As(err, &exitErr) && exitErr.ExitCode() == 1 {
@@ -134,7 +137,7 @@ func (s *Service) IgnoredPathsFromRoot(root string, pathGroups ...[]string) (map
 	return parseIgnoredPaths(output), nil
 }
 
-func buildLineSeparatedInput(buffer []byte, pathGroups ...[]string) []byte {
+func buildCheckIgnoreInput(buffer []byte, pathGroups ...[]string) []byte {
 	if len(pathGroups) == 1 {
 		return buildSingleGroupInput(buffer, pathGroups[0])
 	}
@@ -156,7 +159,7 @@ func buildLineSeparatedInput(buffer []byte, pathGroups ...[]string) []byte {
 			}
 			seen[path] = struct{}{}
 			buffer = append(buffer, path...)
-			buffer = append(buffer, '\n')
+			buffer = append(buffer, checkIgnoreSeparator)
 		}
 	}
 	return buffer
@@ -180,32 +183,32 @@ func buildTwoOrderedGroupsInput(buffer []byte, left []string, right []string) ([
 		rightPath := right[rightIndex]
 		switch {
 		case leftPath < rightPath:
-			buffer, lastPath = appendUniqueLine(buffer, leftPath, lastPath)
+			buffer, lastPath = appendUniqueEntry(buffer, leftPath, lastPath)
 			leftIndex++
 		case leftPath > rightPath:
-			buffer, lastPath = appendUniqueLine(buffer, rightPath, lastPath)
+			buffer, lastPath = appendUniqueEntry(buffer, rightPath, lastPath)
 			rightIndex++
 		default:
-			buffer, lastPath = appendUniqueLine(buffer, leftPath, lastPath)
+			buffer, lastPath = appendUniqueEntry(buffer, leftPath, lastPath)
 			leftIndex++
 			rightIndex++
 		}
 	}
 	for ; leftIndex < len(left); leftIndex++ {
-		buffer, lastPath = appendUniqueLine(buffer, left[leftIndex], lastPath)
+		buffer, lastPath = appendUniqueEntry(buffer, left[leftIndex], lastPath)
 	}
 	for ; rightIndex < len(right); rightIndex++ {
-		buffer, lastPath = appendUniqueLine(buffer, right[rightIndex], lastPath)
+		buffer, lastPath = appendUniqueEntry(buffer, right[rightIndex], lastPath)
 	}
 	return buffer, true
 }
 
-func appendUniqueLine(buffer []byte, path string, lastPath string) ([]byte, string) {
+func appendUniqueEntry(buffer []byte, path string, lastPath string) ([]byte, string) {
 	if path == "" || path == lastPath {
 		return buffer, lastPath
 	}
 	buffer = append(buffer, path...)
-	buffer = append(buffer, '\n')
+	buffer = append(buffer, checkIgnoreSeparator)
 	return buffer, path
 }
 
@@ -230,7 +233,7 @@ func buildSortedSingleGroupInput(buffer []byte, paths []string) []byte {
 	writeIndex := 0
 	for _, path := range paths {
 		writeIndex += copy(buffer[writeIndex:], path)
-		buffer[writeIndex] = '\n'
+		buffer[writeIndex] = checkIgnoreSeparator
 		writeIndex++
 	}
 	return buffer
@@ -243,7 +246,7 @@ func buildSingleGroupInputWithoutDedup(buffer []byte, paths []string, totalBytes
 			continue
 		}
 		buffer = append(buffer, path...)
-		buffer = append(buffer, '\n')
+		buffer = append(buffer, checkIgnoreSeparator)
 	}
 	return buffer
 }
@@ -260,7 +263,7 @@ func buildSingleGroupInputDedup(buffer []byte, paths []string, totalBytes int) [
 		}
 		seen[path] = struct{}{}
 		buffer = append(buffer, path...)
-		buffer = append(buffer, '\n')
+		buffer = append(buffer, checkIgnoreSeparator)
 	}
 	return buffer
 }
@@ -346,6 +349,13 @@ func (execRunner) Run(repoPath string, input []byte, args ...string) ([]byte, er
 		return output, fmt.Errorf("%w: %s", err, strings.TrimSpace(string(output)))
 	}
 	return output, nil
+}
+
+func trimTrailingCarriageReturn(line []byte) []byte {
+	if len(line) != 0 && line[len(line)-1] == '\r' {
+		return line[:len(line)-1]
+	}
+	return line
 }
 
 func buildTargetStatus(repoPath string, statusOutput []byte) model.TargetRepositoryStatus {

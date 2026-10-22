@@ -67,6 +67,39 @@ func TestCalculateRespectsIgnoreRules(t *testing.T) {
 	}
 }
 
+func TestCalculateSkipsNonASCIIPathsIgnoredByTarget(t *testing.T) {
+	source := t.TempDir()
+	target := t.TempDir()
+	testutil.InitRepo(t, source)
+	testutil.InitRepo(t, target)
+
+	testutil.WriteFile(t, source, "docs/需求/强制放款需求.md", "source requirement")
+	testutil.WriteFile(t, source, "notes.md", "source note")
+	testutil.StageAll(t, source)
+
+	testutil.WriteFile(t, target, ".gitignore", "/docs/\n")
+	testutil.CommitAll(t, target, "init")
+	testutil.WriteFile(t, target, "docs/需求/强制放款需求.md", "source requirement")
+
+	service := NewService(platform.NewOSFileSystem(), gitops.NewService(gitops.NewExecRunner()))
+	result, err := service.Calculate(Request{SourceRoot: source, TargetRoot: target})
+	if err != nil {
+		t.Fatalf("calculate failed: %v", err)
+	}
+
+	got := map[string]model.DiffKind{}
+	for _, entry := range result.Entries {
+		got[entry.Path] = entry.Kind
+	}
+	if _, exists := got["docs/需求/强制放款需求.md"]; exists {
+		t.Fatalf("non-ASCII path ignored by target should not enter diff list")
+	}
+	assertDiffKind(t, got, "notes.md", model.DiffKindAdded)
+	if result.Summary.Total != 1 {
+		t.Fatalf("expected only notes.md in diff, got %+v", result.Summary)
+	}
+}
+
 func assertDiffKind(t *testing.T, entries map[string]model.DiffKind, path string, expected model.DiffKind) {
 	t.Helper()
 	actual, exists := entries[path]
