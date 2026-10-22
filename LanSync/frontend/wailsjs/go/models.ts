@@ -1,5 +1,41 @@
 export namespace syncer {
 	
+	export class AIProposal {
+	    action: string;
+	    summary: string;
+	    warnings: string[];
+	    content: string;
+	    localHash: string;
+	    remoteHash: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new AIProposal(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.action = source["action"];
+	        this.summary = source["summary"];
+	        this.warnings = source["warnings"];
+	        this.content = source["content"];
+	        this.localHash = source["localHash"];
+	        this.remoteHash = source["remoteHash"];
+	    }
+	}
+	export class AISettings {
+	    configured: boolean;
+	    model: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new AISettings(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.configured = source["configured"];
+	        this.model = source["model"];
+	    }
+	}
 	export class Comparison {
 	    path: string;
 	    local: string;

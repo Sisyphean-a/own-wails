@@ -48,6 +48,8 @@ type Engine struct {
 	wg           sync.WaitGroup
 	slots        chan struct{}
 	networkError string
+	aiClient     *http.Client
+	aiCancel     context.CancelFunc
 }
 
 func decode(b []byte, v any) error { return json.Unmarshal(b, v) }
@@ -73,6 +75,7 @@ func New(dir string) (*Engine, error) {
 		cancel()
 		return nil, err
 	}
+	e.aiClient = newAIClient()
 	e.settings = Settings{Name: hostname, BackupDir: filepath.Join(absolute, "backups"), Port: 49632}
 	if _, err = store.get("settings", &e.settings); err != nil {
 		store.Close()

@@ -203,6 +203,32 @@ func (a *App) Resolve(id, path, mainHash, copyHash, content string, keepBoth boo
 	}
 	return e.Resolve(id, path, mainHash, copyHash, content, keepBoth)
 }
+func (a *App) GetAISettings() (syncer.AISettings, error) {
+	e, err := a.service()
+	if err != nil {
+		return syncer.AISettings{}, err
+	}
+	return e.AISettings()
+}
+func (a *App) SaveAISettings(key, model string, clearKey bool) error {
+	e, err := a.service()
+	if err != nil {
+		return err
+	}
+	return e.SaveAISettings(key, model, clearKey)
+}
+func (a *App) AnalyzeConflict(id, path, mainHash, copyHash, instruction string) (syncer.AIProposal, error) {
+	e, err := a.service()
+	if err != nil {
+		return syncer.AIProposal{}, err
+	}
+	return e.AnalyzeConflict(id, path, mainHash, copyHash, instruction)
+}
+func (a *App) CancelAI() {
+	if e, err := a.service(); err == nil {
+		e.CancelAI()
+	}
+}
 func (a *App) ConfirmDelete(id, path, localHash, remoteHash string) error {
 	e, err := a.service()
 	if err != nil {

@@ -10,12 +10,20 @@ export function AllowLAN() {
   return window['go']['main']['App']['AllowLAN']();
 }
 
+export function AnalyzeConflict(arg1, arg2, arg3, arg4, arg5) {
+  return window['go']['main']['App']['AnalyzeConflict'](arg1, arg2, arg3, arg4, arg5);
+}
+
 export function ApprovePair(arg1) {
   return window['go']['main']['App']['ApprovePair'](arg1);
 }
 
 export function Begin(arg1) {
   return window['go']['main']['App']['Begin'](arg1);
+}
+
+export function CancelAI() {
+  return window['go']['main']['App']['CancelAI']();
 }
 
 export function ChooseDirectory(arg1) {
@@ -40,6 +48,10 @@ export function DismissPair(arg1) {
 
 export function ExportVersion(arg1, arg2) {
   return window['go']['main']['App']['ExportVersion'](arg1, arg2);
+}
+
+export function GetAISettings() {
+  return window['go']['main']['App']['GetAISettings']();
 }
 
 export function GetSnapshot() {
@@ -76,6 +88,10 @@ export function Resolve(arg1, arg2, arg3, arg4, arg5, arg6) {
 
 export function Restore(arg1, arg2) {
   return window['go']['main']['App']['Restore'](arg1, arg2);
+}
+
+export function SaveAISettings(arg1, arg2, arg3) {
+  return window['go']['main']['App']['SaveAISettings'](arg1, arg2, arg3);
 }
 
 export function SaveSettings(arg1) {

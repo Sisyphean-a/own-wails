@@ -6,9 +6,13 @@ export function AcceptInvite(arg1:string,arg2:string):Promise<void>;
 
 export function AllowLAN():Promise<void>;
 
+export function AnalyzeConflict(arg1:string,arg2:string,arg3:string,arg4:string,arg5:string):Promise<syncer.AIProposal>;
+
 export function ApprovePair(arg1:string):Promise<void>;
 
 export function Begin(arg1:string):Promise<void>;
+
+export function CancelAI():Promise<void>;
 
 export function ChooseDirectory(arg1:string):Promise<string>;
 
@@ -21,6 +25,8 @@ export function Connect(arg1:string):Promise<void>;
 export function DismissPair(arg1:string):Promise<void>;
 
 export function ExportVersion(arg1:string,arg2:string):Promise<void>;
+
+export function GetAISettings():Promise<syncer.AISettings>;
 
 export function GetSnapshot():Promise<syncer.Snapshot>;
 
@@ -39,6 +45,8 @@ export function RemoveTask(arg1:string):Promise<void>;
 export function Resolve(arg1:string,arg2:string,arg3:string,arg4:string,arg5:string,arg6:boolean):Promise<void>;
 
 export function Restore(arg1:string,arg2:string):Promise<void>;
+
+export function SaveAISettings(arg1:string,arg2:string,arg3:boolean):Promise<void>;
 
 export function SaveSettings(arg1:syncer.Settings):Promise<void>;
 
